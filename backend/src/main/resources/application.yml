@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    allow-circular-references: true
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/andrewsport}
+      database: andrewsport
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SMTP_USERNAME:your_gmail@gmail.com}
+    password: ${SMTP_PASSWORD:your_app_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:9a672713a69363574d75225e59672617f1a3e625a62e71c828d84e550e04cf4c28135ef58e9321703ab0bf0f7a5b3de9bcfcd4ad3b3bc3a7e58a2e5b7e93540b}
+    expiration-ms: 86400000 # 24 hours
+  openai:
+    api-key: ${OPENAI_API_KEY:mock-key}

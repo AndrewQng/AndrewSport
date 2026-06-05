@@ -1,0 +1,43 @@
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.dist/
+dist/
+
+# Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+.metadata/
+.classpath
+.project
+.settings/
+.dependency-analysis.json
+
+# Environment / Credentials
+.env
+.env.local
+.env.*.local
+*.pem
+
+# OS Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+docs

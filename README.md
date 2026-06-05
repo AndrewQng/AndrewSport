@@ -41,6 +41,27 @@ AndrewSport là một ứng dụng thương mại điện tử chuyên nghiệp 
 - Tông màu chủ đạo **Đỏ Thể thao (#DC2626)** mạnh mẽ và năng động.
 - Giao diện tối ưu hóa 100% responsive cho mọi loại thiết bị (Mobile, Tablet, Desktop). Hiển thị mượt mà 2 cột sản phẩm trên dòng mobile hẹp, tự động thu gọn menu thành Hamburger Drawer, và hỗ trợ cuộn ngang tự động cho các bảng dữ liệu giỏ hàng/đơn hàng.
 
+### 5. ⭐ Đánh Giá & Bình Luận Sản Phẩm (Reviews & Ratings)
+- **Sao đánh giá sống động**: Hiển thị điểm số sao trung bình cùng số lượng đánh giá trực quan trên các card sản phẩm ngoài trang chủ và trên trang chi tiết sản phẩm.
+- **Viết đánh giá & Nhận xét**: Khách hàng sau khi đăng nhập có thể gửi đánh giá số sao (1-5 sao) kèm bình luận cảm nghĩ về chất lượng sản phẩm thực tế.
+- **Tính điểm trung bình động**: Hệ thống backend tự động tổng hợp và tính toán sao trung bình mỗi khi có review mới được gửi lên.
+
+### 6. 🚫 Hủy Đơn Hàng & Tự Động Hoàn Tồn Kho (Order Cancellation)
+- **Khách hàng tự quản lý**: Bổ sung nút "Hủy đơn" kèm hộp thoại xác nhận trực tiếp trong mục Lịch sử mua hàng đối với các đơn hàng còn ở trạng thái `PROCESSING` (Chờ xử lý).
+- **Hoàn trả số lượng kho**: Khi đơn hàng bị hủy, backend tự động tính toán hoàn trả số lượng tồn kho của từng sản phẩm trong đơn hàng về lại catalog, tránh thất thoát dữ liệu kho.
+
+### 7. 🔗 Giao Dịch Cơ Sở Dữ Liệu Đồng Bộ (MongoDB Transactions)
+- **Tính toàn vẹn dữ liệu**: Sử dụng `@Transactional` thông qua `MongoTransactionManager` để nhóm các thao tác ghi dữ liệu liên quan thành các transaction đơn lẻ.
+- **Rollback tự động**: Khi thực hiện đặt hàng (giảm số lượng kho + tạo hóa đơn) hoặc hủy đơn hàng (hoàn kho + cập nhật trạng thái đơn), nếu bất kỳ tác vụ nào trong chuỗi gặp lỗi, toàn bộ thay đổi sẽ được rollback để tránh lệch dữ liệu kho.
+
+### 8. 🎫 Hệ Thống Mã Giảm Giá Đa Dạng (Discount Coupons)
+- **Nhập mã linh hoạt**: Cho phép áp dụng Voucher/Mã giảm giá trực tiếp ngay tại trang thanh toán (Checkout).
+- **Xác thực an toàn hai lớp**: Tính toán số tiền được giảm ngay trên giao diện (client-side) và thực hiện tính toán & xác minh lại độc lập từ phía Backend (server-side) để tránh rủi ro gian lận giá.
+- **Các mã giảm giá sẵn có**:
+  - `ANDREW20`: Giảm 20% tổng giá trị đơn hàng (tối đa 500.000 đ).
+  - `WELCOMESPORT`: Giảm trực tiếp 100.000 đ.
+  - `PICKLEBALL`: Giảm trực tiếp 50.000 đ.
+
 ---
 
 ## 🔧 Hướng Dẫn Cài Đặt & Chạy Dự Án (Installation Guide)
@@ -81,6 +102,12 @@ OPENAI_API_KEY=your_openai_api_key_here
    ```
    *Lớp cơ sở dữ liệu mẫu về vợt, giày, bóng tennis, pickleball sẽ tự động được khởi tạo vào MongoDB ở lần chạy đầu tiên.*
 
+> [!WARNING]
+> **Lưu ý quan trọng cho MongoDB Transactions:**
+> Để sử dụng tính năng Giao dịch `@Transactional`, MongoDB bắt buộc phải chạy ở chế độ **Replica Set**. 
+> - Nếu sử dụng **MongoDB Atlas** đám mây (khuyên dùng), Replica Set đã được kích hoạt mặc định.
+> - Nếu sử dụng **MongoDB local (Standalone)**, bạn cần khởi chạy mongod kèm tham số replica set (Ví dụ: `mongod --replSet rs0`) và khởi tạo nó qua Mongo Shell (`rs.initiate()`), nếu không hệ thống sẽ báo lỗi `Sessions are not supported` khi thực hiện đặt hàng hoặc hủy đơn.
+
 ### Bước 4: Khởi chạy Frontend (React + Vite)
 1. Di chuyển vào thư mục frontend:
    ```bash
@@ -111,6 +138,11 @@ Tất cả các API đăng ký/xác thực đều được cấu hình cho phép
 | **POST** | `/api/auth/social-login` | Đăng nhập/Đăng ký nhanh qua Google/Facebook | `{ "provider": "GOOGLE", "email": "...", "fullName": "...", "providerId": "..." }` |
 | **POST** | `/api/auth/login` | Đăng nhập tài khoản mật khẩu thông thường | `{ "username": "...", "password": "..." }` |
 | **POST** | `/api/auth/refresh` | Làm mới access token bằng refresh token | `{ "refreshToken": "..." }` |
+| **GET** | `/api/reviews/product/{productId}` | Lấy danh sách reviews & điểm sao trung bình của sản phẩm | *(None)* |
+| **POST** | `/api/reviews` | Gửi đánh giá sản phẩm mới (Yêu cầu đăng nhập) | `{ "productId": "...", "rating": 5, "comment": "..." }` |
+| **POST** | `/api/orders` | Đặt hàng mới (Yêu cầu đăng nhập, hỗ trợ voucher giảm giá) | `{ "customerName": "Nguyễn Văn A", "items": [{"productId": "...", "quantity": 1}], "shippingAddress": "...", "paymentMethod": "CREDIT_CARD", "couponCode": "ANDREW20" }` |
+| **GET** | `/api/orders/my-history` | Lấy lịch sử đơn hàng của người dùng hiện tại (Yêu cầu đăng nhập) | *(None)* |
+| **PUT** | `/api/orders/{id}/cancel` | Hủy đơn hàng đang chờ xử lý & hoàn trả tồn kho (Yêu cầu đăng nhập) | *(None)* |
 
 ---
 

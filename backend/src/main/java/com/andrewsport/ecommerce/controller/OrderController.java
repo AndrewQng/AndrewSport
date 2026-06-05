@@ -39,4 +39,17 @@ public class OrderController {
     public ResponseEntity<Order> updateOrderStatus(@PathVariable String id, @RequestParam String status) {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, status));
     }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelOrder(@PathVariable String id, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body(java.util.Map.of("message", "Vui lòng đăng nhập!"));
+        }
+        try {
+            Order cancelledOrder = orderService.cancelOrder(id, principal.getName());
+            return ResponseEntity.ok(cancelledOrder);
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
 }

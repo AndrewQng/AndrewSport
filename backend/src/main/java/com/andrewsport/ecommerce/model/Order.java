@@ -18,6 +18,8 @@ public class Order {
     private String paymentStatus; // PENDING, PAID, FAILED
     private String orderStatus; // PROCESSING, SHIPPED, DELIVERED, CANCELLED
     private String shippingAddress;
+    private String couponCode;
+    private Double discountAmount;
 
     public Order() {}
 
@@ -111,5 +113,21 @@ public class Order {
 
     public void setShippingAddress(String shippingAddress) {
         this.shippingAddress = shippingAddress;
+    }
+
+    public String getCouponCode() {
+        return couponCode;
+    }
+
+    public void setCouponCode(String couponCode) {
+        this.couponCode = couponCode;
+    }
+
+    public Double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(Double discountAmount) {
+        this.discountAmount = discountAmount;
     }
 }

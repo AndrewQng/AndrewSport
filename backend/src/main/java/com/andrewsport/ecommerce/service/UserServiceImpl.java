@@ -8,6 +8,7 @@ import com.andrewsport.ecommerce.model.OtpVerification;
 import com.andrewsport.ecommerce.repository.UserRepository;
 import com.andrewsport.ecommerce.repository.OtpVerificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -136,6 +137,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public AuthResponse verifyAndRegister(VerifyOtpRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
@@ -192,6 +194,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         OtpVerification otp = otpVerificationRepository.findByEmailAndCodeAndType(
                 request.getEmail(), request.getOtp(), "FORGOT_PASSWORD"
@@ -212,6 +215,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public AuthResponse socialLogin(SocialLoginRequest request) {
         String provider = request.getProvider().toUpperCase();
         String providerId = request.getProviderId();

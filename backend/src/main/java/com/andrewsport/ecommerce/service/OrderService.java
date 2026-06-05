@@ -8,4 +8,5 @@ public interface OrderService {
     List<Order> getMyOrders(String username);
     List<Order> getAllOrders();
     Order updateOrderStatus(String id, String status);
+    Order cancelOrder(String id, String username);
 }

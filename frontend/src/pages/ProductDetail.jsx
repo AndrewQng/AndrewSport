@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Typography, Button, Tag, Space, Table, Tabs, Card, Breadcrumb, InputNumber, Alert, message } from 'antd';
+import { Row, Col, Typography, Button, Tag, Space, Table, Tabs, Card, Breadcrumb, InputNumber, Alert, message, Rate, Input } from 'antd';
 import { ShoppingCartOutlined, TrophyOutlined, GiftOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -14,8 +14,18 @@ export default function ProductDetail({ onAddToCart }) {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
 
+  // Review states
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [userReviewRating, setUserReviewRating] = useState(5);
+  const [userReviewComment, setUserReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const isLoggedIn = !!localStorage.getItem('token');
+
   useEffect(() => {
     fetchProductDetails();
+    fetchReviews();
   }, [productId]);
 
   const fetchProductDetails = async () => {
@@ -27,6 +37,40 @@ export default function ProductDetail({ onAddToCart }) {
       message.error('Không thể tải thông tin chi tiết sản phẩm.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const response = await api.get(`/reviews/product/${productId}`);
+      setReviews(response.data.reviews || []);
+      setAverageRating(response.data.averageRating || 0);
+      setTotalReviews(response.data.totalReviews || 0);
+    } catch (error) {
+      console.error('Không thể tải đánh giá sản phẩm.');
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!userReviewComment.trim()) {
+      message.error('Vui lòng viết nội dung nhận xét!');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      await api.post('/reviews', {
+        productId: productId,
+        rating: userReviewRating,
+        comment: userReviewComment
+      });
+      message.success('Cảm ơn bạn đã gửi đánh giá sản phẩm!');
+      setUserReviewComment('');
+      setUserReviewRating(5);
+      fetchReviews();
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Gửi đánh giá thất bại.');
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -106,6 +150,101 @@ export default function ProductDetail({ onAddToCart }) {
     { title: 'Chi tiết sản phẩm', dataIndex: 'value', key: 'value' }
   ];
 
+  const renderReviewsTab = () => {
+    return (
+      <div style={{ padding: '16px 8px' }}>
+        <Row gutter={[32, 32]}>
+          {/* Reviews List */}
+          <Col xs={24} md={14}>
+            <Title level={4} style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              Nhận xét từ khách hàng ({totalReviews})
+            </Title>
+            
+            {reviews.length === 0 ? (
+              <div style={{ padding: '48px 0', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                <Text type="secondary" style={{ fontSize: '15px' }}>Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên đánh giá!</Text>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {reviews.map((rev) => (
+                  <div key={rev.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <Space>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#DC2626', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
+                          {(rev.fullName || rev.username || 'U').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <Text strong style={{ display: 'block', fontSize: '14px' }}>{rev.fullName || rev.username}</Text>
+                          <Text type="secondary" style={{ fontSize: '11px' }}>
+                            {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}
+                          </Text>
+                        </div>
+                      </Space>
+                      <Rate disabled value={rev.rating} style={{ fontSize: '12px', color: '#FADB14' }} />
+                    </div>
+                    <Paragraph style={{ paddingLeft: '44px', margin: 0, color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
+                      {rev.comment}
+                    </Paragraph>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Col>
+
+          {/* Review Write Form */}
+          <Col xs={24} md={10}>
+            <Card style={{ borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fafafa', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+              <Title level={4} style={{ margin: '0 0 16px 0', color: '#DC2626', fontSize: '18px', fontWeight: 700 }}>Viết đánh giá của bạn</Title>
+              
+              {isLoggedIn ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <Text strong style={{ display: 'block', marginBottom: '8px' }}>Đánh giá số sao:</Text>
+                    <Rate value={userReviewRating} onChange={setUserReviewRating} style={{ color: '#FADB14', fontSize: '24px' }} />
+                  </div>
+                  
+                  <div>
+                    <Text strong style={{ display: 'block', marginBottom: '8px' }}>Nội dung nhận xét:</Text>
+                    <Input.TextArea
+                      placeholder="Hãy chia sẻ cảm nhận thực tế của bạn về chất lượng sản phẩm..."
+                      value={userReviewComment}
+                      onChange={(e) => setUserReviewComment(e.target.value)}
+                      rows={4}
+                      style={{ borderRadius: '6px' }}
+                    />
+                  </div>
+                  
+                  <Button
+                    type="primary"
+                    size="large"
+                    loading={submittingReview}
+                    onClick={handleSubmitReview}
+                    style={{ background: '#DC2626', borderColor: '#DC2626', fontWeight: 700, borderRadius: '8px', marginTop: '8px' }}
+                  >
+                    Gửi đánh giá
+                  </Button>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                  <Text type="secondary" style={{ display: 'block', marginBottom: '16px' }}>
+                    Vui lòng đăng nhập để gửi đánh giá và nhận xét về sản phẩm này.
+                  </Text>
+                  <Button
+                    type="primary"
+                    onClick={() => navigate('/login')}
+                    style={{ background: '#DC2626', borderColor: '#DC2626', fontWeight: 700, borderRadius: '8px' }}
+                  >
+                    Đăng nhập ngay
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </Col>
+        </Row>
+      </div>
+    );
+  };
+
   const tabsItems = [
     {
       key: '1',
@@ -135,6 +274,11 @@ export default function ProductDetail({ onAddToCart }) {
           </Paragraph>
         </div>
       )
+    },
+    {
+      key: '3',
+      label: <span style={{ fontSize: '15px', fontWeight: 600 }}>Đánh giá & Bình luận ({totalReviews})</span>,
+      children: renderReviewsTab()
     }
   ];
 
@@ -182,9 +326,16 @@ export default function ProductDetail({ onAddToCart }) {
               <Tag color="red" style={{ borderRadius: 4 }}>{product.category === 'Badminton' ? 'Cầu lông' : product.category === 'Tennis' ? 'Quần vợt' : product.category}</Tag>
             </Space>
 
-            <Title level={2} style={{ margin: '0 0 16px 0', fontSize: '28px', fontWeight: 800 }}>
+            <Title level={2} style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: 800 }}>
               {product.name}
             </Title>
+
+            {/* Stars rating stats summary */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Rate disabled allowHalf value={averageRating} style={{ color: '#FADB14', fontSize: '15px' }} />
+              <Text strong style={{ fontSize: '14px', color: '#1E293B' }}>{averageRating} / 5</Text>
+              <Text type="secondary" style={{ fontSize: '13px' }}>({totalReviews} đánh giá)</Text>
+            </div>
 
             <div style={{ background: '#fff5f5', padding: '16px', borderRadius: '8px', marginBottom: 20, border: '1px solid #fee2e2' }}>
               <Space align="baseline">

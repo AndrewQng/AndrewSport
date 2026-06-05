@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Typography, Empty, Button, Spin, List, message } from 'antd';
+import { Table, Card, Typography, Empty, Button, Spin, List, message, Popconfirm } from 'antd';
 import { HistoryOutlined, ShoppingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -25,6 +25,16 @@ export default function OrderHistory() {
       message.error('Không thể tải lịch sử mua hàng.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    try {
+      await api.put(`/orders/${orderId}/cancel`);
+      message.success('Đơn hàng đã được hủy thành công!');
+      fetchOrders();
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Hủy đơn hàng thất bại.');
     }
   };
 
@@ -66,13 +76,47 @@ export default function OrderHistory() {
       title: 'Tổng tiền',
       dataIndex: 'totalAmount',
       key: 'totalAmount',
-      render: (amount) => <Text strong style={{ color: '#DC2626' }}>{formatVND(amount)}</Text>
+      render: (amount, record) => (
+        <div>
+          <Text strong style={{ color: '#DC2626' }}>{formatVND(amount)}</Text>
+          {record.couponCode && (
+            <div style={{ fontSize: '11px', marginTop: '2px', lineHeight: '1.4' }}>
+              <span style={{ color: '#6b7280' }}>Mã: </span>
+              <Text code style={{ fontSize: '10px', padding: '0 4px' }}>{record.couponCode}</Text>
+              <div style={{ color: '#52c41a' }}>Giảm: -{formatVND(record.discountAmount)}</div>
+            </div>
+          )}
+        </div>
+      )
     },
     {
       title: 'Trạng thái',
       dataIndex: 'orderStatus',
       key: 'orderStatus',
       render: (status) => getOrderStatusTag(status)
+    },
+    {
+      title: 'Hành động',
+      key: 'action',
+      render: (_, record) => {
+        if (record.orderStatus === 'PROCESSING') {
+          return (
+            <Popconfirm
+              title="Xác nhận hủy đơn hàng?"
+              description="Hành động này sẽ khôi phục lại số lượng sản phẩm trong kho."
+              onConfirm={() => handleCancelOrder(record.id)}
+              okText="Hủy đơn"
+              cancelText="Quay lại"
+              okButtonProps={{ danger: true }}
+            >
+              <Button type="primary" danger size="small" style={{ borderRadius: '4px' }}>
+                Hủy đơn
+              </Button>
+            </Popconfirm>
+          );
+        }
+        return null;
+      }
     }
   ];
 

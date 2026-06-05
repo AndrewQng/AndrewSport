@@ -15,7 +15,45 @@ export default function Checkout({ cart, user, onClearCart }) {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [createdOrder, setCreatedOrder] = useState(null);
 
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
+
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handleApplyCoupon = () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      message.warning('Vui lòng nhập mã giảm giá.');
+      return;
+    }
+
+    let discount = 0;
+    if (code === 'ANDREW20') {
+      discount = totalPrice * 0.2;
+      if (discount > 500000) discount = 500000;
+    } else if (code === 'WELCOMESPORT') {
+      discount = 100000;
+      if (discount > totalPrice) discount = totalPrice;
+    } else if (code === 'PICKLEBALL') {
+      discount = 50000;
+      if (discount > totalPrice) discount = totalPrice;
+    } else {
+      message.error('Mã giảm giá không hợp lệ!');
+      return;
+    }
+
+    setAppliedCoupon(code);
+    setDiscountAmount(discount);
+    message.success(`Áp dụng mã giảm giá ${code} thành công!`);
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon('');
+    setDiscountAmount(0);
+    setCouponInput('');
+    message.info('Đã hủy áp dụng mã giảm giá.');
+  };
 
   const handleNext = (values) => {
     setFormData(prev => ({ ...prev, ...values }));
@@ -38,9 +76,11 @@ export default function Checkout({ cart, user, onClearCart }) {
       userId: user?.id || 'anonymous',
       customerName: finalData.fullName,
       items: orderItems,
-      totalAmount: totalPrice,
+      totalAmount: totalPrice - discountAmount,
       paymentMethod: paymentMethod === 'card' ? 'CREDIT_CARD' : 'E_WALLET',
-      shippingAddress: `${finalData.address}, ${finalData.city}`
+      shippingAddress: `${finalData.address}, ${finalData.city}`,
+      couponCode: appliedCoupon || null,
+      discountAmount: discountAmount || 0.0
     };
 
     try {
@@ -99,11 +139,50 @@ export default function Checkout({ cart, user, onClearCart }) {
       {currentStep === 1 && (
         <Spin spinning={loading} tip="Đang xác thực giao dịch...">
           <Card title={<span style={{ fontWeight: 700 }}>Thực hiện thanh toán</span>}>
-            <div style={{ marginBottom: 24, textAlign: 'center' }}>
-              <Text type="secondary" style={{ fontSize: 16 }}>Tổng số tiền thanh toán: </Text>
-              <Title level={3} style={{ margin: 0, color: '#DC2626', fontWeight: 900 }}>
-                {formatVND(totalPrice)}
-              </Title>
+            {/* Voucher / Coupon Code input */}
+            <div style={{ marginBottom: 24, padding: '16px', background: '#fff', borderRadius: '8px', border: '1px solid #f0f0f0' }}>
+              <label style={{ fontWeight: 600, display: 'block', marginBottom: 8, fontSize: '14px' }}>Voucher / Mã giảm giá</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Input
+                  placeholder="Nhập mã (Ví dụ: ANDREW20, WELCOMESPORT, PICKLEBALL)"
+                  value={couponInput}
+                  onChange={e => setCouponInput(e.target.value)}
+                  disabled={!!appliedCoupon}
+                  size="large"
+                />
+                {!appliedCoupon ? (
+                  <Button type="primary" onClick={handleApplyCoupon} size="large" style={{ background: '#111827', borderColor: '#111827', fontWeight: 600 }}>
+                    Áp dụng
+                  </Button>
+                ) : (
+                  <Button danger onClick={handleRemoveCoupon} size="large" style={{ fontWeight: 600 }}>
+                    Hủy bỏ
+                  </Button>
+                )}
+              </div>
+              <div style={{ marginTop: 8, fontSize: '12px', color: '#6b7280' }}>
+                Mã giảm giá có sẵn: <Text code>ANDREW20</Text> (giảm 20% tối đa 500k), <Text code>WELCOMESPORT</Text> (giảm 100k), <Text code>PICKLEBALL</Text> (giảm 50k)
+              </div>
+            </div>
+
+            {/* Price breakdown */}
+            <div style={{ marginBottom: 24, padding: '16px', background: '#f9f9f9', borderRadius: '8px', border: '1px solid #f0f0f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text type="secondary" style={{ fontSize: '14px' }}>Tạm tính:</Text>
+                <Text strong style={{ fontSize: '14px' }}>{formatVND(totalPrice)}</Text>
+              </div>
+              {appliedCoupon && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text type="success" style={{ fontSize: '14px' }}>Giảm giá ({appliedCoupon}):</Text>
+                  <Text type="success" strong style={{ fontSize: '14px' }}>-{formatVND(discountAmount)}</Text>
+                </div>
+              )}
+              <div style={{ borderTop: '1px dashed #e8e8e8', margin: '8px 0', paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text strong style={{ fontSize: 16 }}>Tổng thanh toán:</Text>
+                <Text strong style={{ fontSize: 20, color: '#DC2626', fontWeight: 900 }}>
+                  {formatVND(totalPrice - discountAmount)}
+                </Text>
+              </div>
             </div>
 
             <Radio.Group 

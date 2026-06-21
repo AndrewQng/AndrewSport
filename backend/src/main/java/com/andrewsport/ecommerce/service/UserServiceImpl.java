@@ -179,7 +179,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void sendForgotPasswordOtp(String email) {
-        User user = userRepository.findByEmail(email)
+        userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email chưa được đăng ký trong hệ thống!"));
 
         String code = String.format("%06d", new Random().nextInt(1000000));

@@ -20,6 +20,12 @@ export default function Cart({ cart, onUpdateCartQty, onRemoveFromCart }) {
           <img src={record.imageUrl} alt={text} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 6 }} />
           <div>
             <Text strong style={{ fontSize: 14 }}>{text}</Text>
+            {record.variationDetail && (
+              <>
+                <br />
+                <Text type="danger" style={{ fontSize: 12, fontWeight: 600 }}>Biến thể: {record.variationDetail}</Text>
+              </>
+            )}
             <br />
             <Text type="secondary" style={{ fontSize: 12 }}>{record.category === 'Badminton' ? 'Cầu lông' : record.category}</Text>
           </div>
@@ -41,7 +47,7 @@ export default function Cart({ cart, onUpdateCartQty, onRemoveFromCart }) {
           min={1} 
           max={record.stockQuantity} 
           value={qty} 
-          onChange={(val) => onUpdateCartQty(record.id, val)}
+          onChange={(val) => onUpdateCartQty(record.id, record.sku, val)}
           style={{ width: 70 }}
         />
       ),
@@ -59,7 +65,7 @@ export default function Cart({ cart, onUpdateCartQty, onRemoveFromCart }) {
           type="text" 
           danger 
           icon={<DeleteOutlined />} 
-          onClick={() => onRemoveFromCart(record.id)} 
+          onClick={() => onRemoveFromCart(record.id, record.sku)} 
         />
       ),
     },
@@ -92,7 +98,7 @@ export default function Cart({ cart, onUpdateCartQty, onRemoveFromCart }) {
             <Table 
               dataSource={cart} 
               columns={columns} 
-              rowKey="id" 
+              rowKey={(record) => `${record.id}_${record.sku || ''}`} 
               pagination={false} 
               scroll={{ x: 'max-content' }}
             />

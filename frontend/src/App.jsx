@@ -20,7 +20,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [cart, setCart] = useState([]);
   const [initializing, setInitializing] = useState(true);
-  
+
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminPath = location.pathname.startsWith('/admin');
@@ -48,7 +48,7 @@ export default function App() {
     const isAdminPath = window.location.pathname.startsWith('/admin');
     const tokenKey = isAdminPath ? 'admin_token' : 'token';
     const token = localStorage.getItem(tokenKey);
-    
+
     if (token) {
       try {
         const response = await api.get('/auth/me');
@@ -62,43 +62,57 @@ export default function App() {
     setInitializing(false);
   };
 
-  const handleAddToCart = (product, qty = 1) => {
+  const handleAddToCart = (product, qty = 1, sku = null, variationDetail = null, customPrice = null) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
+      const existingItem = prevCart.find((item) => item.id === product.id && item.sku === sku);
       let updatedCart;
-      
+
+      let maxStock = product.stockQuantity;
+      if (sku && product.variations) {
+        const matchingVar = product.variations.find(v => v.sku === sku);
+        if (matchingVar) maxStock = matchingVar.stockQuantity;
+      }
+
+      const itemPrice = customPrice !== null ? customPrice : product.price;
+
       if (existingItem) {
         const newQty = existingItem.quantity + qty;
-        if (newQty > product.stockQuantity) {
-          message.warning(`Chỉ còn ${product.stockQuantity} sản phẩm trong kho.`);
+        if (newQty > maxStock) {
+          message.warning(`Chỉ còn ${maxStock} sản phẩm biến thể trong kho.`);
           return prevCart;
         }
         updatedCart = prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: newQty } : item
+          (item.id === product.id && item.sku === sku) ? { ...item, quantity: newQty } : item
         );
       } else {
-        updatedCart = [...prevCart, { ...product, quantity: qty }];
+        updatedCart = [...prevCart, { 
+          ...product, 
+          price: itemPrice, 
+          quantity: qty, 
+          sku: sku, 
+          variationDetail: variationDetail 
+        }];
       }
-      
+
       localStorage.setItem('cart', JSON.stringify(updatedCart));
-      message.success(`Đã thêm ${product.name} vào giỏ hàng.`);
+      message.success(`Đã thêm ${product.name} ${variationDetail ? `(${variationDetail})` : ''} vào giỏ hàng.`);
       return updatedCart;
     });
   };
 
-  const handleUpdateCartQty = (productId, qty) => {
+  const handleUpdateCartQty = (productId, sku, qty) => {
     setCart((prevCart) => {
       const updatedCart = prevCart.map((item) =>
-        item.id === productId ? { ...item, quantity: qty } : item
+        (item.id === productId && item.sku === sku) ? { ...item, quantity: qty } : item
       );
       localStorage.setItem('cart', JSON.stringify(updatedCart));
       return updatedCart;
     });
   };
 
-  const handleRemoveFromCart = (productId) => {
+  const handleRemoveFromCart = (productId, sku) => {
     setCart((prevCart) => {
-      const updatedCart = prevCart.filter((item) => item.id !== productId);
+      const updatedCart = prevCart.filter((item) => !(item.id === productId && item.sku === sku));
       localStorage.setItem('cart', JSON.stringify(updatedCart));
       message.success('Đã xóa sản phẩm khỏi giỏ hàng.');
       return updatedCart;
@@ -139,7 +153,7 @@ export default function App() {
     if (category) params.set('category', category);
     if (brand) params.set('brand', brand);
     if (subCategory) params.set('subCategory', subCategory);
-    
+
     const queryString = params.toString();
     navigate(queryString ? `/?${queryString}` : '/');
   };
@@ -159,15 +173,15 @@ export default function App() {
       >
         <Routes>
           <Route path="/admin/login" element={<AdminLogin onLoginSuccess={setUser} />} />
-          <Route 
-            path="/admin" 
+          <Route
+            path="/admin"
             element={
               user && user.role === 'ADMIN' ? (
                 <AdminDashboard onLogout={handleAdminLogout} />
               ) : (
                 <Navigate to="/admin/login" replace />
               )
-            } 
+            }
           />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
@@ -186,90 +200,90 @@ export default function App() {
       }}
     >
       <Layout style={{ minHeight: '100vh', background: '#f8fafc' }}>
-        <Navbar 
-          user={user} 
-          cart={cart} 
-          onLogout={handleLogout} 
-          onSearch={handleSearch} 
+        <Navbar
+          user={user}
+          cart={cart}
+          onLogout={handleLogout}
+          onSearch={handleSearch}
           onCategoryBrandSelect={handleCategoryBrandSelect}
         />
         <Content style={{ padding: '24px 0', background: '#f8fafc' }}>
           <Routes>
-            <Route 
-              path="/" 
+            <Route
+              path="/"
               element={
-                <Home 
-                  onAddToCart={handleAddToCart} 
+                <Home
+                  onAddToCart={handleAddToCart}
                 />
-              } 
+              }
             />
-            <Route 
-              path="/product/:productId" 
+            <Route
+              path="/product/:productId"
               element={
-                <ProductDetail 
-                  onAddToCart={handleAddToCart} 
+                <ProductDetail
+                  onAddToCart={handleAddToCart}
                 />
-              } 
+              }
             />
-            <Route 
-              path="/cart" 
+            <Route
+              path="/cart"
               element={
-                <Cart 
-                  cart={cart} 
-                  onUpdateCartQty={handleUpdateCartQty} 
-                  onRemoveFromCart={handleRemoveFromCart} 
+                <Cart
+                  cart={cart}
+                  onUpdateCartQty={handleUpdateCartQty}
+                  onRemoveFromCart={handleRemoveFromCart}
                 />
-              } 
+              }
             />
-            <Route 
-              path="/checkout" 
+            <Route
+              path="/checkout"
               element={
                 user ? (
-                  <Checkout 
-                    cart={cart} 
-                    user={user} 
-                    onClearCart={handleClearCart} 
+                  <Checkout
+                    cart={cart}
+                    user={user}
+                    onClearCart={handleClearCart}
                   />
                 ) : (
                   <Navigate to="/login" replace />
                 )
-              } 
+              }
             />
-            <Route 
-              path="/order-history" 
+            <Route
+              path="/order-history"
               element={
                 user ? (
                   <OrderHistory />
                 ) : (
                   <Navigate to="/login" replace />
                 )
-              } 
+              }
             />
-            <Route 
-              path="/login" 
+            <Route
+              path="/login"
               element={
                 user ? (
                   <Navigate to="/" replace />
                 ) : (
                   <Login onLoginSuccess={setUser} />
                 )
-              } 
+              }
             />
-            <Route 
-              path="/register" 
+            <Route
+              path="/register"
               element={
                 user ? (
                   <Navigate to="/" replace />
                 ) : (
                   <Register onLoginSuccess={setUser} />
                 )
-              } 
+              }
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Content>
         <Footer style={{ textAlign: 'center', color: '#64748b', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
-          🏸 AndrewSport E-Commerce © 2026. Phát triển với Spring Boot + React & Ant Design.
+          🏸 AndrewSport © 2026.
         </Footer>
         <ChatbotDrawer />
       </Layout>

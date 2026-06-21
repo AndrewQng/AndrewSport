@@ -69,7 +69,9 @@ export default function Checkout({ cart, user, onClearCart }) {
       productName: item.name,
       price: item.price,
       quantity: item.quantity,
-      imageUrl: item.imageUrl
+      imageUrl: item.imageUrl,
+      sku: item.sku || null,
+      variationDetail: item.variationDetail || null
     }));
 
     const orderPayload = {

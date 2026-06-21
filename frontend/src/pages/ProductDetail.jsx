@@ -14,6 +14,67 @@ export default function ProductDetail({ onAddToCart }) {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
 
+  // Variation States
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedWeightGrip, setSelectedWeightGrip] = useState(null);
+  const [selectedGenderForm, setSelectedGenderForm] = useState(null);
+  const [selectedType, setSelectedType] = useState(null);
+
+  const availableOptions = React.useMemo(() => {
+    if (!product || !product.variations) return {};
+    
+    const colors = [...new Set(product.variations.map(v => v.color).filter(Boolean))];
+    const sizes = [...new Set(product.variations.map(v => v.size).filter(Boolean))];
+    const weightGrips = [...new Set(product.variations.map(v => v.weightGrip).filter(Boolean))];
+    const genderForms = [...new Set(product.variations.map(v => v.genderForm).filter(Boolean))];
+    const types = [...new Set(product.variations.map(v => v.type).filter(Boolean))];
+
+    return { colors, sizes, weightGrips, genderForms, types };
+  }, [product]);
+
+  useEffect(() => {
+    if (product && product.variations && product.variations.length > 0) {
+      const opts = availableOptions;
+      if (opts.colors && opts.colors.length > 0) setSelectedColor(opts.colors[0]);
+      if (opts.sizes && opts.sizes.length > 0) setSelectedSize(opts.sizes[0]);
+      if (opts.weightGrips && opts.weightGrips.length > 0) setSelectedWeightGrip(opts.weightGrips[0]);
+      if (opts.genderForms && opts.genderForms.length > 0) setSelectedGenderForm(opts.genderForms[0]);
+      if (opts.types && opts.types.length > 0) setSelectedType(opts.types[0]);
+    } else {
+      setSelectedColor(null);
+      setSelectedSize(null);
+      setSelectedWeightGrip(null);
+      setSelectedGenderForm(null);
+      setSelectedType(null);
+    }
+  }, [product, availableOptions]);
+
+  const selectedVariation = React.useMemo(() => {
+    if (!product || !product.variations || product.variations.length === 0) return null;
+    
+    return product.variations.find(v => {
+      const matchColor = !selectedColor || v.color === selectedColor;
+      const matchSize = !selectedSize || v.size === selectedSize;
+      const matchWeightGrip = !selectedWeightGrip || v.weightGrip === selectedWeightGrip;
+      const matchGenderForm = !selectedGenderForm || v.genderForm === selectedGenderForm;
+      const matchType = !selectedType || v.type === selectedType;
+      
+      return matchColor && matchSize && matchWeightGrip && matchGenderForm && matchType;
+    });
+  }, [product, selectedColor, selectedSize, selectedWeightGrip, selectedGenderForm, selectedType]);
+
+  const displayedPrice = selectedVariation ? selectedVariation.price : (product ? product.price : 0);
+  const displayedStock = selectedVariation ? selectedVariation.stockQuantity : (product ? product.stockQuantity : 0);
+  const isOutOfStock = displayedStock <= 0 || (product && product.variations && product.variations.length > 0 && !selectedVariation);
+  const isLowStock = displayedStock > 0 && displayedStock <= 5;
+
+  useEffect(() => {
+    if (quantity > displayedStock && displayedStock > 0) {
+      setQuantity(displayedStock);
+    }
+  }, [displayedStock, quantity]);
+
   // Review states
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
@@ -91,15 +152,46 @@ export default function ProductDetail({ onAddToCart }) {
     );
   }
 
-  const isOutOfStock = product.stockQuantity <= 0;
-  const isLowStock = product.stockQuantity > 0 && product.stockQuantity <= 5;
-
   const handleAddToCartClick = () => {
-    onAddToCart(product, quantity);
+    if (product.variations && product.variations.length > 0) {
+      if (!selectedVariation) {
+        message.error('Vui lòng chọn đầy đủ các tùy chọn biến thể.');
+        return;
+      }
+      
+      const varDetails = [];
+      if (selectedVariation.color) varDetails.push(`Màu: ${selectedVariation.color}`);
+      if (selectedVariation.size) varDetails.push(`Size: ${selectedVariation.size}`);
+      if (selectedVariation.weightGrip) varDetails.push(`Bản: ${selectedVariation.weightGrip}`);
+      if (selectedVariation.genderForm) varDetails.push(`Dáng: ${selectedVariation.genderForm}`);
+      if (selectedVariation.type) varDetails.push(`Loại: ${selectedVariation.type}`);
+      const variationDetailStr = varDetails.join(', ');
+
+      onAddToCart(product, quantity, selectedVariation.sku, variationDetailStr, selectedVariation.price);
+    } else {
+      onAddToCart(product, quantity);
+    }
   };
 
   const handleBuyNowClick = () => {
-    onAddToCart(product, quantity);
+    if (product.variations && product.variations.length > 0) {
+      if (!selectedVariation) {
+        message.error('Vui lòng chọn đầy đủ các tùy chọn biến thể.');
+        return;
+      }
+
+      const varDetails = [];
+      if (selectedVariation.color) varDetails.push(`Màu: ${selectedVariation.color}`);
+      if (selectedVariation.size) varDetails.push(`Size: ${selectedVariation.size}`);
+      if (selectedVariation.weightGrip) varDetails.push(`Bản: ${selectedVariation.weightGrip}`);
+      if (selectedVariation.genderForm) varDetails.push(`Dáng: ${selectedVariation.genderForm}`);
+      if (selectedVariation.type) varDetails.push(`Loại: ${selectedVariation.type}`);
+      const variationDetailStr = varDetails.join(', ');
+
+      onAddToCart(product, quantity, selectedVariation.sku, variationDetailStr, selectedVariation.price);
+    } else {
+      onAddToCart(product, quantity);
+    }
     navigate('/cart');
   };
 
@@ -319,45 +411,156 @@ export default function ProductDetail({ onAddToCart }) {
         <Col xs={24} md={13}>
           <div>
             <Space align="center" style={{ marginBottom: 8 }}>
-              <TrophyOutlined style={{ color: '#DC2626', fontSize: '18px' }} />
-              <Text style={{ fontSize: '14px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              <TrophyOutlined style={{ color: '#DC2626', fontSize: '20px' }} />
+              <Text style={{ fontSize: '15px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 Hãng {product.brand}
               </Text>
-              <Tag color="red" style={{ borderRadius: 4 }}>{product.category === 'Badminton' ? 'Cầu lông' : product.category === 'Tennis' ? 'Quần vợt' : product.category}</Tag>
+              <Tag color="red" style={{ borderRadius: 4, fontSize: '13px' }}>{product.category === 'Badminton' ? 'Cầu lông' : product.category === 'Tennis' ? 'Quần vợt' : product.category}</Tag>
             </Space>
 
-            <Title level={2} style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: 800 }}>
+            <Title level={2} style={{ margin: '0 0 12px 0', fontSize: '32px', fontWeight: 800 }}>
               {product.name}
             </Title>
 
             {/* Stars rating stats summary */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <Rate disabled allowHalf value={averageRating} style={{ color: '#FADB14', fontSize: '15px' }} />
-              <Text strong style={{ fontSize: '14px', color: '#1E293B' }}>{averageRating} / 5</Text>
-              <Text type="secondary" style={{ fontSize: '13px' }}>({totalReviews} đánh giá)</Text>
+              <Rate disabled allowHalf value={averageRating} style={{ color: '#FADB14', fontSize: '16px' }} />
+              <Text strong style={{ fontSize: '15px', color: '#1E293B' }}>{averageRating} / 5</Text>
+              <Text type="secondary" style={{ fontSize: '14px' }}>({totalReviews} đánh giá)</Text>
             </div>
 
-            <div style={{ background: '#fff5f5', padding: '16px', borderRadius: '8px', marginBottom: 20, border: '1px solid #fee2e2' }}>
+            <div style={{ background: '#fff5f5', padding: '18px', borderRadius: '8px', marginBottom: 20, border: '1px solid #fee2e2' }}>
               <Space align="baseline">
-                <span style={{ fontSize: '32px', color: '#DC2626', fontWeight: 900 }}>
-                  {formatVND(product.price)}
+                <span className="detail-price" style={{ fontSize: '38px', color: '#DC2626', fontWeight: 900 }}>
+                  {formatVND(displayedPrice)}
                 </span>
-                <Text delete type="secondary" style={{ fontSize: '16px', marginLeft: 12, color: '#94a3b8' }}>
-                  {formatVND(product.price * 1.2)}
+                <Text delete type="secondary" style={{ fontSize: '18px', marginLeft: 12, color: '#94a3b8' }}>
+                  {formatVND(displayedPrice * 1.2)}
                 </Text>
-                <Tag color="red" style={{ marginLeft: 8, fontWeight: 700, borderRadius: 4 }}>-20% GIẢM</Tag>
+                <Tag color="red" style={{ marginLeft: 8, fontWeight: 700, borderRadius: 4, fontSize: '12px' }}>-20% GIẢM</Tag>
               </Space>
               
               <div style={{ marginTop: 8 }}>
                 {isOutOfStock ? (
                   <Tag color="error" style={{ fontWeight: 600 }}>Tạm hết hàng</Tag>
                 ) : isLowStock ? (
-                  <Tag color="warning" style={{ fontWeight: 600 }}>Chỉ còn {product.stockQuantity} sản phẩm!</Tag>
+                  <Tag color="warning" style={{ fontWeight: 600 }}>Chỉ còn {displayedStock} sản phẩm!</Tag>
                 ) : (
                   <Tag color="success" style={{ fontWeight: 600 }}>Còn hàng (Có sẵn tại cửa hàng)</Tag>
                 )}
               </div>
             </div>
+
+            {/* Variations Selection */}
+            {product.variations && product.variations.length > 0 && (
+              <Card size="small" style={{ marginBottom: 20, border: '1px solid #f1f5f9' }} title={<span style={{ fontWeight: 700, fontSize: '14px' }}>Chọn cấu hình sản phẩm</span>}>
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                  {availableOptions.colors && availableOptions.colors.length > 0 && (
+                    <div>
+                      <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Màu sắc:</Text>
+                      <Space wrap>
+                        {availableOptions.colors.map(color => (
+                          <Button 
+                            key={color}
+                            type={selectedColor === color ? 'primary' : 'default'}
+                            danger={selectedColor === color}
+                            onClick={() => setSelectedColor(color)}
+                            style={{ borderRadius: '6px' }}
+                          >
+                            {color}
+                          </Button>
+                        ))}
+                      </Space>
+                    </div>
+                  )}
+
+                  {availableOptions.weightGrips && availableOptions.weightGrips.length > 0 && (
+                    <div>
+                      <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Trọng lượng & Chu vi cán:</Text>
+                      <Space wrap>
+                        {availableOptions.weightGrips.map(wg => (
+                          <Button 
+                            key={wg}
+                            type={selectedWeightGrip === wg ? 'primary' : 'default'}
+                            danger={selectedWeightGrip === wg}
+                            onClick={() => setSelectedWeightGrip(wg)}
+                            style={{ borderRadius: '6px' }}
+                          >
+                            {wg}
+                          </Button>
+                        ))}
+                      </Space>
+                    </div>
+                  )}
+
+                  {availableOptions.sizes && availableOptions.sizes.length > 0 && (
+                    <div>
+                      <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Kích thước (Size):</Text>
+                      <Space wrap>
+                        {availableOptions.sizes.map(size => (
+                          <Button 
+                            key={size}
+                            type={selectedSize === size ? 'primary' : 'default'}
+                            danger={selectedSize === size}
+                            onClick={() => setSelectedSize(size)}
+                            style={{ borderRadius: '6px' }}
+                          >
+                            {size}
+                          </Button>
+                        ))}
+                      </Space>
+                    </div>
+                  )}
+
+                  {availableOptions.genderForms && availableOptions.genderForms.length > 0 && (
+                    <div>
+                      <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Form dáng:</Text>
+                      <Space wrap>
+                        {availableOptions.genderForms.map(gf => (
+                          <Button 
+                            key={gf}
+                            type={selectedGenderForm === gf ? 'primary' : 'default'}
+                            danger={selectedGenderForm === gf}
+                            onClick={() => setSelectedGenderForm(gf)}
+                            style={{ borderRadius: '6px' }}
+                          >
+                            {gf}
+                          </Button>
+                        ))}
+                      </Space>
+                    </div>
+                  )}
+
+                  {availableOptions.types && availableOptions.types.length > 0 && (
+                    <div>
+                      <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Loại sản phẩm:</Text>
+                      <Space wrap>
+                        {availableOptions.types.map(t => (
+                          <Button 
+                            key={t}
+                            type={selectedType === t ? 'primary' : 'default'}
+                            danger={selectedType === t}
+                            onClick={() => setSelectedType(t)}
+                            style={{ borderRadius: '6px' }}
+                          >
+                            {t}
+                          </Button>
+                        ))}
+                      </Space>
+                    </div>
+                  )}
+                </Space>
+              </Card>
+            )}
+
+            {product.variations && product.variations.length > 0 && !selectedVariation && (
+              <Alert 
+                message="Cấu hình này hiện tại không có sẵn. Vui lòng chọn tùy chọn khác."
+                type="warning"
+                showIcon
+                style={{ marginBottom: 20, borderRadius: '8px' }}
+              />
+            )}
 
             {/* Premium Promotion Box */}
             <Card 
@@ -382,7 +585,7 @@ export default function ProductDetail({ onAddToCart }) {
                   <Text strong>Số lượng mua:</Text>
                   <InputNumber 
                     min={1} 
-                    max={product.stockQuantity} 
+                    max={displayedStock} 
                     value={quantity} 
                     onChange={setQuantity}
                     size="large"

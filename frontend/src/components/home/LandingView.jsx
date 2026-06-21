@@ -3,6 +3,7 @@ import { Row, Col, Typography, Empty, Button } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import ProductCard from '../ProductCard';
 import { categoryBanners } from '../../constants/productFilters';
+import FlashSale from './FlashSale';
 
 const { Title, Text } = Typography;
 
@@ -43,6 +44,9 @@ export default function LandingView({
         <div style={{ position: 'absolute', right: '5%', bottom: '-10%', width: '400px', height: '400px', background: '#DC2626', opacity: 0.05, borderRadius: '50%' }}></div>
       </div>
 
+      {/* 0. Flash Sale Section */}
+      <FlashSale products={products} onAddToCart={onAddToCart} />
+
       {/* 1. Sản Phẩm Mới Section */}
       <div style={{ marginBottom: 48, position: 'relative' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -50,21 +54,12 @@ export default function LandingView({
           <div style={{ width: '80px', height: '4px', background: '#DC2626', margin: '8px auto 0' }} />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, borderBottom: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '8px' }}>
           {['Tất cả', 'Vợt Cầu Lông', 'Giày Cầu Lông', 'Áo Cầu Lông', 'Váy cầu lông', 'Quần Cầu Lông'].map((tab) => (
             <span
               key={tab}
               onClick={() => setActiveNewTab(tab)}
-              style={{
-                padding: '12px 24px',
-                cursor: 'pointer',
-                fontWeight: 700,
-                fontSize: '14px',
-                color: activeNewTab === tab ? '#DC2626' : '#64748b',
-                borderBottom: activeNewTab === tab ? '3px solid #DC2626' : '3px solid transparent',
-                transition: 'all 0.2s',
-                textTransform: 'uppercase'
-              }}
+              className={`product-tab ${activeNewTab === tab ? 'active' : ''}`}
             >
               {tab}
             </span>
@@ -131,41 +126,18 @@ export default function LandingView({
             <Col xs={12} sm={12} md={6} key={index}>
               <div 
                 onClick={() => handleBannerClick(banner.category, banner.sub)}
-                style={{
-                  position: 'relative',
-                  height: '220px',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.06)'
-                }}
                 className="banner-card"
+                style={{ height: '220px' }}
               >
                 <img 
                   src={banner.img} 
                   alt={banner.title} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s' }}
                   className="banner-img"
                 />
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.15)' }} />
+                <div className="banner-overlay" />
                 
                 {/* Angled Ribbon Overlap */}
-                <div style={{
-                  transform: 'rotate(-15deg)',
-                  background: '#DC2626',
-                  color: '#ffffff',
-                  padding: '6px 30px',
-                  fontWeight: 800,
-                  fontSize: '13px',
-                  letterSpacing: '0.5px',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-                  textAlign: 'center',
-                  width: '140%',
-                  position: 'absolute',
-                  top: '40%',
-                  left: '-20%',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
-                }}>
+                <div className="banner-ribbon">
                   {banner.title}
                 </div>
               </div>

@@ -1,31 +1,52 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Drawer, Input, Button, Space, Typography, FloatButton } from 'antd';
-import { MessageOutlined, SendOutlined } from '@ant-design/icons';
+import { Input, Button, Space } from 'antd';
+import { MessageOutlined, SendOutlined, DeleteOutlined, CloseOutlined } from '@ant-design/icons';
 import api from '../services/api';
-
-const { Text } = Typography;
 
 export default function ChatbotDrawer() {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [chatLog, setChatLog] = useState([
-    { sender: 'bot', text: 'Xin chào! Tôi là Trợ lý Ảo AndrewSport. Hãy hỏi tôi bất kỳ điều gì về dụng cụ Cầu lông (như các dòng Yonex Astrox, Lining Axforce), Tennis hoặc Pickleball!' }
-  ]);
+  const [chatLog, setChatLog] = useState(() => {
+    const savedLog = localStorage.getItem('assistant_chat_log');
+    return savedLog ? JSON.parse(savedLog) : [
+      { sender: 'bot', text: 'Xin chào! Tôi là Trợ lý AI AndrewSport. Hãy hỏi tôi bất kỳ điều gì về dụng cụ Cầu lông (như các dòng Yonex Astrox, Lining Axforce), Tennis hoặc Pickleball!' }
+    ];
+  });
   const [loading, setLoading] = useState(false);
-  const [width, setWidth] = useState(window.innerWidth);
+  
   const logEndRef = useRef(null);
+  const chatWindowRef = useRef(null);
+  const triggerRef = useRef(null);
 
   useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    localStorage.setItem('assistant_chat_log', JSON.stringify(chatLog));
+  }, [chatLog]);
 
   useEffect(() => {
     if (logEndRef.current) {
       logEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatLog, open]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        chatWindowRef.current && 
+        !chatWindowRef.current.contains(event.target) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
 
   const handleSend = async () => {
     if (!message.trim()) return;
@@ -46,33 +67,57 @@ export default function ChatbotDrawer() {
     }
   };
 
-  const drawerWidth = width < 576 ? '100%' : 380;
+  const handleClearHistory = () => {
+    const defaultLog = [
+      { sender: 'bot', text: 'Xin chào! Tôi là Trợ lý AI AndrewSport. Hãy hỏi tôi bất kỳ điều gì về dụng cụ Cầu lông (như các dòng Yonex Astrox, Lining Axforce), Tennis hoặc Pickleball!' }
+    ];
+    setChatLog(defaultLog);
+  };
 
   return (
     <>
       {/* Custom Premium Floating AI Chatbot Trigger */}
       <div 
-        onClick={() => setOpen(true)}
+        ref={triggerRef}
+        onClick={() => setOpen(prev => !prev)}
         className="chatbot-float-trigger"
       >
         <MessageOutlined style={{ fontSize: '20px' }} />
         <span className="hide-on-mobile">Hỏi Trợ lý AI</span>
       </div>
 
-      <Drawer
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🤖 Trợ lý AndrewSport</span>
-            {loading && <Text type="secondary" style={{ fontSize: '12px' }}>(Đang soạn tin...)</Text>}
-          </div>
-        }
-        placement="right"
-        width={drawerWidth}
-        onClose={() => setOpen(false)}
-        open={open}
-        styles={{ body: { display: 'flex', flexDirection: 'column', padding: '16px' } }}
+      {/* Floating Chatbot Window */}
+      <div 
+        ref={chatWindowRef}
+        className={`chatbot-window ${open ? 'open' : ''}`}
       >
-        <div style={{ flex: 1, overflowY: 'auto', marginBottom: '16px', display: 'flex', flexDirection: 'column' }}>
+        <div className="chatbot-header">
+          <div className="chatbot-header-title">
+            <span>🤖 Trợ lý AI AndrewSport</span>
+            {loading && <span style={{ fontSize: '11px', opacity: 0.8 }}>(Đang soạn...)</span>}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {chatLog.length > 1 && (
+              <button 
+                className="chatbot-header-close"
+                onClick={handleClearHistory}
+                title="Xóa lịch sử chat"
+                style={{ fontSize: '14px' }}
+              >
+                <DeleteOutlined />
+              </button>
+            )}
+            <button 
+              className="chatbot-header-close"
+              onClick={() => setOpen(false)}
+              title="Đóng"
+            >
+              <CloseOutlined />
+            </button>
+          </div>
+        </div>
+
+        <div className="chatbot-body">
           {chatLog.map((chat, idx) => (
             <div 
               key={idx} 
@@ -83,7 +128,8 @@ export default function ChatbotDrawer() {
           ))}
           <div ref={logEndRef} />
         </div>
-        <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+
+        <div className="chatbot-footer">
           <Space.Compact style={{ width: '100%' }}>
             <Input 
               placeholder="Hỏi về sản phẩm, giá bán..." 
@@ -101,7 +147,7 @@ export default function ChatbotDrawer() {
             />
           </Space.Compact>
         </div>
-      </Drawer>
+      </div>
     </>
   );
 }

@@ -6,6 +6,8 @@ public class OrderItem {
     private Double price;
     private Integer quantity;
     private String imageUrl;
+    private String sku;
+    private String variationDetail;
 
     public OrderItem() {}
 
@@ -15,6 +17,16 @@ public class OrderItem {
         this.price = price;
         this.quantity = quantity;
         this.imageUrl = imageUrl;
+    }
+
+    public OrderItem(String productId, String productName, Double price, Integer quantity, String imageUrl, String sku, String variationDetail) {
+        this.productId = productId;
+        this.productName = productName;
+        this.price = price;
+        this.quantity = quantity;
+        this.imageUrl = imageUrl;
+        this.sku = sku;
+        this.variationDetail = variationDetail;
     }
 
     public String getProductId() {
@@ -55,5 +67,21 @@ public class OrderItem {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public String getVariationDetail() {
+        return variationDetail;
+    }
+
+    public void setVariationDetail(String variationDetail) {
+        this.variationDetail = variationDetail;
     }
 }

@@ -64,9 +64,16 @@ export default function OrderHistory() {
           dataSource={items}
           renderItem={(item) => (
             <List.Item style={{ padding: '4px 0', border: 'none' }}>
-              <Text style={{ fontSize: '13px' }}>
-                • {item.productName} <Text type="secondary">x{item.quantity}</Text>
-              </Text>
+              <div>
+                <Text style={{ fontSize: '13px' }}>
+                  • {item.productName} <Text type="secondary">x{item.quantity}</Text>
+                </Text>
+                {item.variationDetail && (
+                  <div style={{ paddingLeft: '12px', fontSize: '11px', color: '#dc2626', fontWeight: 600 }}>
+                    Biến thể: {item.variationDetail}
+                  </div>
+                )}
+              </div>
             </List.Item>
           )}
         />

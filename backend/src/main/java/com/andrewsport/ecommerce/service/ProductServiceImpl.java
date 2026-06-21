@@ -18,16 +18,21 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getAllProducts(String category, String search) {
         boolean hasCategory = StringUtils.hasText(category);
         boolean hasSearch = StringUtils.hasText(search);
+        List<Product> rawProducts;
 
         if (hasCategory && hasSearch) {
-            return productRepository.findByCategoryIgnoreCaseAndNameContainingIgnoreCase(category, search);
+            rawProducts = productRepository.findByCategoryIgnoreCaseAndNameContainingIgnoreCase(category, search);
         } else if (hasCategory) {
-            return productRepository.findByCategoryIgnoreCase(category);
+            rawProducts = productRepository.findByCategoryIgnoreCase(category);
         } else if (hasSearch) {
-            return productRepository.findByNameContainingIgnoreCase(search);
+            rawProducts = productRepository.findByNameContainingIgnoreCase(search);
         } else {
-            return productRepository.findAll();
+            rawProducts = productRepository.findAll();
         }
+
+        return rawProducts.stream()
+                .filter(p -> !"DELETED".equalsIgnoreCase(p.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
@@ -56,6 +61,8 @@ public class ProductServiceImpl implements ProductService {
         product.setCategory(productDetails.getCategory());
         product.setBrand(productDetails.getBrand());
         product.setStatus(productDetails.getStatus());
+        product.setIsFlashSale(productDetails.getIsFlashSale());
+        product.setFlashSalePrice(productDetails.getFlashSalePrice());
 
         return productRepository.save(product);
     }
@@ -63,6 +70,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteProduct(String id) {
         Product product = getProductById(id);
-        productRepository.delete(product);
+        product.setStatus("DELETED");
+        productRepository.save(product);
     }
 }

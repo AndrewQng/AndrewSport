@@ -30,14 +30,44 @@ public class OrderServiceImpl implements OrderService {
         double subtotal = 0.0;
         for (OrderItem item : order.getItems()) {
             Product product = productService.getProductById(item.getProductId());
-            if (product.getStockQuantity() < item.getQuantity()) {
-                throw new RuntimeException("Sản phẩm " + product.getName() + " không đủ hàng trong kho!");
-            }
-            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
-            productService.updateProduct(product.getId(), product);
+            Double itemPrice = product.getPrice();
             
-            // Accumulate actual prices from database
-            subtotal += product.getPrice() * item.getQuantity();
+            if (item.getSku() != null && !item.getSku().trim().isEmpty() && product.getVariations() != null) {
+                com.andrewsport.ecommerce.model.ProductVariation selectedVar = null;
+                for (com.andrewsport.ecommerce.model.ProductVariation var : product.getVariations()) {
+                    if (item.getSku().equals(var.getSku())) {
+                        selectedVar = var;
+                        break;
+                    }
+                }
+                
+                if (selectedVar != null) {
+                    if (selectedVar.getStockQuantity() < item.getQuantity()) {
+                        throw new RuntimeException("Biến thể sản phẩm " + product.getName() + " (" + item.getVariationDetail() + ") không đủ hàng trong kho!");
+                    }
+                    selectedVar.setStockQuantity(selectedVar.getStockQuantity() - item.getQuantity());
+                    itemPrice = selectedVar.getPrice();
+                    
+                    int totalStock = 0;
+                    for (com.andrewsport.ecommerce.model.ProductVariation var : product.getVariations()) {
+                        totalStock += var.getStockQuantity();
+                    }
+                    product.setStockQuantity(totalStock);
+                } else {
+                    if (product.getStockQuantity() < item.getQuantity()) {
+                        throw new RuntimeException("Sản phẩm " + product.getName() + " không đủ hàng trong kho!");
+                    }
+                    product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+                }
+            } else {
+                if (product.getStockQuantity() < item.getQuantity()) {
+                    throw new RuntimeException("Sản phẩm " + product.getName() + " không đủ hàng trong kho!");
+                }
+                product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+            }
+            
+            productService.updateProduct(product.getId(), product);
+            subtotal += itemPrice * item.getQuantity();
         }
 
         // Apply discount coupon if present
@@ -108,7 +138,28 @@ public class OrderServiceImpl implements OrderService {
             try {
                 Product product = productService.getProductById(item.getProductId());
                 if (product != null) {
-                    product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                    if (item.getSku() != null && !item.getSku().trim().isEmpty() && product.getVariations() != null) {
+                        com.andrewsport.ecommerce.model.ProductVariation selectedVar = null;
+                        for (com.andrewsport.ecommerce.model.ProductVariation var : product.getVariations()) {
+                            if (item.getSku().equals(var.getSku())) {
+                                selectedVar = var;
+                                break;
+                            }
+                        }
+                        if (selectedVar != null) {
+                            selectedVar.setStockQuantity(selectedVar.getStockQuantity() + item.getQuantity());
+                            
+                            int totalStock = 0;
+                            for (com.andrewsport.ecommerce.model.ProductVariation var : product.getVariations()) {
+                                totalStock += var.getStockQuantity();
+                            }
+                            product.setStockQuantity(totalStock);
+                        } else {
+                            product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                        }
+                    } else {
+                        product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                    }
                     productService.updateProduct(product.getId(), product);
                 }
             } catch (Exception e) {

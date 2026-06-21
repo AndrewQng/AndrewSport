@@ -5,8 +5,12 @@ A web-based e-commerce platform specializing in sports equipment for badminton, 
 ## Language
 
 **Product (Sản phẩm)**:
-An item listed for sale in the catalog, categorized under a specific sport (badminton, tennis, or pickleball). It contains inventory properties (`price`, `stockQuantity`, `status` [ACTIVE, INACTIVE]) and physical attributes specific to sports gear (`length`, `gripLength`, `swingweight`, `weight`, `balance`, `stiffness`, `playStyle`, `gameMode`, `level`, and `technologies`).
+An item listed for sale in the catalog, categorized under a specific sport (badminton, tennis, or pickleball). It contains base inventory properties and physical attributes specific to sports gear, and may embed a list of variations.
 _Avoid_: Item, gear, equipment
+
+**ProductVariation (Biến thể sản phẩm)**:
+A specific purchasable variation of a product defined by its distinct attributes (e.g. Size, Color, Grip Size) having its own price, SKU, stock quantity, and optional image.
+_Avoid_: Option, variant
 
 **Category (Danh mục)**:
 A classification grouping products by sport. The core categories are Badminton (Cầu lông), Tennis, and Pickleball.

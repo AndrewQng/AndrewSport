@@ -130,6 +130,7 @@ export default function AdminDashboard({ onLogout }) {
           <img src={record.imageUrl} alt={text} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
           <div>
             <span style={{ fontWeight: 600 }}>{text}</span>
+            {record.isFlashSale && <Tag color="warning" style={{ marginLeft: 6, fontSize: '10px', fontWeight: 700 }}>⚡ FLASH SALE</Tag>}
             <br />
             <span style={{ fontSize: '11px', color: '#64748b' }}>Hãng {record.brand}</span>
           </div>
@@ -362,6 +363,31 @@ export default function AdminDashboard({ onLogout }) {
             <Col span={12}>
               <Form.Item name="gripLength" label="Cán vợt (mm)">
                 <Input placeholder="205" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="isFlashSale" label="Tham gia Flash Sale">
+                <Select placeholder="Chọn trạng thái">
+                  <Option value={false}>Không tham gia</Option>
+                  <Option value={true}>Tham gia Flash Sale</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item 
+                noStyle 
+                shouldUpdate={(prevValues, currentValues) => prevValues.isFlashSale !== currentValues.isFlashSale}
+              >
+                {({ getFieldValue }) => 
+                  getFieldValue('isFlashSale') === true ? (
+                    <Form.Item name="flashSalePrice" label="Giá bán Flash Sale (VND)" rules={[{ required: true, message: 'Nhập giá bán Flash Sale' }]}>
+                      <InputNumber min={1} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')} parser={value => value.replace(/\./g, '')} style={{ width: '100%' }} />
+                    </Form.Item>
+                  ) : null
+                }
               </Form.Item>
             </Col>
           </Row>

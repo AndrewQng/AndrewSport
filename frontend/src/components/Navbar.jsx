@@ -219,7 +219,7 @@ export default function Navbar({ user, cart, onLogout, onSearch, onCategoryBrand
             onCategoryBrandSelect('', '');
           }}
         >
-          <span style={{ fontSize: '20px', mdFontSize: '24px', fontWeight: 900, color: '#DC2626', letterSpacing: '0.8px' }}>
+          <span className="navbar-logo-text" style={{ fontSize: '20px', mdFontSize: '24px', fontWeight: 900, color: '#DC2626', letterSpacing: '0.8px' }}>
             🏸 ANDREW<span style={{ color: '#0f172a' }} className="hide-on-mobile">SPORT</span>
           </span>
         </div>
@@ -308,46 +308,52 @@ export default function Navbar({ user, cart, onLogout, onSearch, onCategoryBrand
           position: 'relative',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '48px' }}>
           <span 
+            onMouseEnter={() => setMegaMenuOpen(false)}
             onClick={() => {
               onCategoryBrandSelect('', '');
             }}
-            style={{ color: '#ffffff', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', cursor: 'pointer' }}
+            className="nav-link"
           >
             TRANG CHỦ
           </span>
 
           <span 
             onMouseEnter={() => setMegaMenuOpen(true)}
-            style={{ color: '#ffffff', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+            className="nav-link"
+            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             SẢN PHẨM <DownOutlined style={{ fontSize: '10px' }} />
           </span>
 
           <span 
+            onMouseEnter={() => setMegaMenuOpen(false)}
             onClick={() => {
               onCategoryBrandSelect('', '');
             }}
-            style={{ color: '#ffffff', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', cursor: 'pointer' }}
+            className="nav-link"
           >
             SALE OFF
           </span>
 
           <span 
-            style={{ color: '#ffffff', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', cursor: 'pointer' }}
+            onMouseEnter={() => setMegaMenuOpen(false)}
+            className="nav-link"
           >
             TIN TỨC
           </span>
 
           <span 
-            style={{ color: '#ffffff', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', cursor: 'pointer' }}
+            onMouseEnter={() => setMegaMenuOpen(false)}
+            className="nav-link"
           >
             GIỚI THIỆU
           </span>
 
           <span 
-            style={{ color: '#ffffff', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', cursor: 'pointer' }}
+            onMouseEnter={() => setMegaMenuOpen(false)}
+            className="nav-link"
           >
             LIÊN HỆ
           </span>

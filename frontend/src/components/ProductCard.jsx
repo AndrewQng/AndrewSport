@@ -7,9 +7,40 @@ import { formatVND } from '../utils/format';
 const { Text, Title } = Typography;
 
 export default function ProductCard({ product, onAddToCart }) {
-  const isOutOfStock = product.stockQuantity <= 0;
-  const isLowStock = product.stockQuantity > 0 && product.stockQuantity <= 5;
   const navigate = useNavigate();
+
+  const totalStock = React.useMemo(() => {
+    if (product.variations && product.variations.length > 0) {
+      return product.variations.reduce((sum, v) => sum + v.stockQuantity, 0);
+    }
+    return product.stockQuantity;
+  }, [product.stockQuantity, product.variations]);
+
+  const isOutOfStock = totalStock <= 0;
+  const isLowStock = totalStock > 0 && totalStock <= 5;
+
+  const priceDisplay = React.useMemo(() => {
+    if (product.variations && product.variations.length > 0) {
+      const prices = product.variations.map(v => v.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      if (minPrice === maxPrice) {
+        return formatVND(minPrice);
+      } else {
+        return `Từ ${formatVND(minPrice)}`;
+      }
+    }
+    return formatVND(product.price);
+  }, [product.price, product.variations]);
+
+  const handleCartClick = (e) => {
+    e.stopPropagation();
+    if (product.variations && product.variations.length > 0) {
+      navigate(`/product/${product.id}`);
+    } else {
+      onAddToCart(product);
+    }
+  };
 
   // Consistent rating based on name to make catalog look premium and alive
   const mockRating = React.useMemo(() => {
@@ -54,16 +85,16 @@ export default function ProductCard({ product, onAddToCart }) {
     >
       <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, height: '100%', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '4px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
             <Space align="center">
               <TrophyOutlined style={{ color: '#DC2626' }} />
-              <Text type="secondary" style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Text type="secondary" style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Hãng {product.brand}
               </Text>
             </Space>
             <Space size={4} align="center">
-              <Rate disabled allowHalf defaultValue={mockRating} style={{ fontSize: '11px', color: '#FADB14' }} />
-              <span style={{ fontSize: '11px', color: '#8C8C8C' }}>({mockReviewsCount})</span>
+              <Rate disabled allowHalf defaultValue={mockRating} style={{ fontSize: '12px', color: '#FADB14' }} />
+              <span style={{ fontSize: '12px', color: '#8C8C8C' }}>({mockReviewsCount})</span>
             </Space>
           </div>
           
@@ -80,7 +111,7 @@ export default function ProductCard({ product, onAddToCart }) {
             type="secondary" 
             ellipsis={{ rows: 2 }} 
             className="hide-on-mobile"
-            style={{ fontSize: '13px', display: 'block', height: '36px', marginBottom: '16px', lineHeight: '1.4' }}
+            style={{ fontSize: '14px', display: 'block', height: '40px', marginBottom: '16px', lineHeight: '1.4' }}
           >
             {product.description}
           </Text>
@@ -89,11 +120,11 @@ export default function ProductCard({ product, onAddToCart }) {
         <div>
           <div className="product-card-price-row">
             <Title level={4} className="product-card-price">
-              {formatVND(product.price)}
+              {priceDisplay}
             </Title>
             
             {isLowStock && (
-              <Tag color="warning" style={{ margin: 0, fontWeight: 600 }}>Chỉ còn {product.stockQuantity}!</Tag>
+              <Tag color="warning" style={{ margin: 0, fontWeight: 600 }}>Chỉ còn {totalStock}!</Tag>
             )}
             {!isOutOfStock && !isLowStock && (
               <Tag color="success" style={{ margin: 0, fontWeight: 600 }}>Còn hàng</Tag>
@@ -105,10 +136,10 @@ export default function ProductCard({ product, onAddToCart }) {
             icon={<ShoppingCartOutlined />}
             block
             disabled={isOutOfStock}
-            onClick={() => onAddToCart(product)}
+            onClick={handleCartClick}
             className="product-card-button"
           >
-            Thêm vào giỏ
+            {product.variations && product.variations.length > 0 ? "Chọn tùy chọn" : "Thêm vào giỏ"}
           </Button>
         </div>
       </div>

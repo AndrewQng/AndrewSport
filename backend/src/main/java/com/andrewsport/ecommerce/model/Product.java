@@ -14,7 +14,9 @@ public class Product {
     private String imageUrl;
     private String category;
     private String brand;
-    private String status; // ACTIVE, INACTIVE
+    private String status; // ACTIVE, INACTIVE, DELETED
+    private Boolean isFlashSale;
+    private Double flashSalePrice;
     private String length;
     private String gripLength;
     private String swingweight;
@@ -25,6 +27,7 @@ public class Product {
     private String gameMode;
     private String level;
     private java.util.List<String> technologies;
+    private java.util.List<ProductVariation> variations;
 
     public Product() {}
 
@@ -37,6 +40,7 @@ public class Product {
         this.category = category;
         this.brand = brand;
         this.status = status;
+        this.variations = new java.util.ArrayList<>();
     }
 
     public String getId() {
@@ -189,6 +193,30 @@ public class Product {
 
     public void setTechnologies(java.util.List<String> technologies) {
         this.technologies = technologies;
+    }
+
+    public java.util.List<ProductVariation> getVariations() {
+        return variations;
+    }
+
+    public void setVariations(java.util.List<ProductVariation> variations) {
+        this.variations = variations;
+    }
+
+    public Boolean getIsFlashSale() {
+        return isFlashSale != null && isFlashSale;
+    }
+
+    public void setIsFlashSale(Boolean isFlashSale) {
+        this.isFlashSale = isFlashSale;
+    }
+
+    public Double getFlashSalePrice() {
+        return flashSalePrice;
+    }
+
+    public void setFlashSalePrice(Double flashSalePrice) {
+        this.flashSalePrice = flashSalePrice;
     }
 }
 

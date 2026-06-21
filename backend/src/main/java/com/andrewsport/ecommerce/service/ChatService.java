@@ -27,8 +27,27 @@ public class ChatService {
         StringBuilder catalogBuilder = new StringBuilder();
         catalogBuilder.append("AndrewSport Catalog:\n");
         for (Product p : products) {
-            catalogBuilder.append(String.format("- Name: %s, Category: %s, Brand: %s, Price: %.0f VND, Stock: %d, Description: %s\n",
+            catalogBuilder.append(String.format("- Name: %s, Category: %s, Brand: %s, Price: %.0f VND, Stock: %d, Description: %s",
                     p.getName(), p.getCategory(), p.getBrand(), p.getPrice(), p.getStockQuantity(), p.getDescription()));
+            
+            if (p.getVariations() != null && !p.getVariations().isEmpty()) {
+                catalogBuilder.append(", Variations (Biến thể): [");
+                for (int i = 0; i < p.getVariations().size(); i++) {
+                    com.andrewsport.ecommerce.model.ProductVariation v = p.getVariations().get(i);
+                    catalogBuilder.append(String.format("{SKU: %s, Price: %.0f VND, Stock: %d", v.getSku(), v.getPrice(), v.getStockQuantity()));
+                    if (v.getColor() != null) catalogBuilder.append(", Color: ").append(v.getColor());
+                    if (v.getSize() != null) catalogBuilder.append(", Size: ").append(v.getSize());
+                    if (v.getWeightGrip() != null) catalogBuilder.append(", WeightGrip: ").append(v.getWeightGrip());
+                    if (v.getGenderForm() != null) catalogBuilder.append(", Form: ").append(v.getGenderForm());
+                    if (v.getType() != null) catalogBuilder.append(", Type: ").append(v.getType());
+                    catalogBuilder.append("}");
+                    if (i < p.getVariations().size() - 1) {
+                        catalogBuilder.append(", ");
+                    }
+                }
+                catalogBuilder.append("]");
+            }
+            catalogBuilder.append("\n");
         }
         String catalog = catalogBuilder.toString();
 

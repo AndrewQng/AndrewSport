@@ -45,19 +45,11 @@ export default function App() {
   }, []);
 
   const checkAuth = async () => {
-    const isAdminPath = window.location.pathname.startsWith('/admin');
-    const tokenKey = isAdminPath ? 'admin_token' : 'token';
-    const token = localStorage.getItem(tokenKey);
-
-    if (token) {
-      try {
-        const response = await api.get('/auth/me');
-        setUser(response.data);
-      } catch (e) {
-        localStorage.removeItem(tokenKey);
-        const refreshKey = isAdminPath ? 'admin_refreshToken' : 'refreshToken';
-        localStorage.removeItem(refreshKey);
-      }
+    try {
+      const response = await api.get('/auth/me');
+      setUser(response.data);
+    } catch (e) {
+      setUser(null);
     }
     setInitializing(false);
   };
@@ -124,17 +116,23 @@ export default function App() {
     localStorage.removeItem('cart');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (e) {
+      // ignore
+    }
     setUser(null);
     navigate('/');
     message.success('Đăng xuất thành công.');
   };
 
-  const handleAdminLogout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_refreshToken');
+  const handleAdminLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (e) {
+      // ignore
+    }
     setUser(null);
     navigate('/admin/login');
     message.success('Đăng xuất quản trị thành công.');

@@ -8,6 +8,7 @@ import com.andrewsport.ecommerce.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.lang.NonNull;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,7 +30,11 @@ public class OrderServiceImpl implements OrderService {
     public Order createOrder(Order order) {
         double subtotal = 0.0;
         for (OrderItem item : order.getItems()) {
-            Product product = productService.getProductById(item.getProductId());
+            String productId = item.getProductId();
+            if (productId == null) {
+                throw new IllegalArgumentException("Mã sản phẩm không được để trống!");
+            }
+            Product product = productService.getProductById(productId);
             Double itemPrice = product.getPrice();
             
             if (item.getSku() != null && !item.getSku().trim().isEmpty() && product.getVariations() != null) {
@@ -66,7 +71,11 @@ public class OrderServiceImpl implements OrderService {
                 product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
             }
             
-            productService.updateProduct(product.getId(), product);
+            String prodId = product.getId();
+            if (prodId == null) {
+                throw new IllegalStateException("Mã ID sản phẩm không tồn tại!");
+            }
+            productService.updateProduct(prodId, product);
             subtotal += itemPrice * item.getQuantity();
         }
 
@@ -111,7 +120,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order updateOrderStatus(String id, String status) {
+    public Order updateOrderStatus(@NonNull String id, String status) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
         order.setOrderStatus(status);
@@ -120,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order cancelOrder(String id, String username) {
+    public Order cancelOrder(@NonNull String id, String username) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại."));
         
@@ -136,31 +145,37 @@ public class OrderServiceImpl implements OrderService {
         // Restore stock for all products in the cancelled order
         for (OrderItem item : order.getItems()) {
             try {
-                Product product = productService.getProductById(item.getProductId());
-                if (product != null) {
-                    if (item.getSku() != null && !item.getSku().trim().isEmpty() && product.getVariations() != null) {
-                        com.andrewsport.ecommerce.model.ProductVariation selectedVar = null;
-                        for (com.andrewsport.ecommerce.model.ProductVariation var : product.getVariations()) {
-                            if (item.getSku().equals(var.getSku())) {
-                                selectedVar = var;
-                                break;
-                            }
-                        }
-                        if (selectedVar != null) {
-                            selectedVar.setStockQuantity(selectedVar.getStockQuantity() + item.getQuantity());
-                            
-                            int totalStock = 0;
+                String productId = item.getProductId();
+                if (productId != null) {
+                    Product product = productService.getProductById(productId);
+                    if (product != null) {
+                        if (item.getSku() != null && !item.getSku().trim().isEmpty() && product.getVariations() != null) {
+                            com.andrewsport.ecommerce.model.ProductVariation selectedVar = null;
                             for (com.andrewsport.ecommerce.model.ProductVariation var : product.getVariations()) {
-                                totalStock += var.getStockQuantity();
+                                if (item.getSku().equals(var.getSku())) {
+                                    selectedVar = var;
+                                    break;
+                                }
                             }
-                            product.setStockQuantity(totalStock);
+                            if (selectedVar != null) {
+                                selectedVar.setStockQuantity(selectedVar.getStockQuantity() + item.getQuantity());
+                                
+                                int totalStock = 0;
+                                for (com.andrewsport.ecommerce.model.ProductVariation var : product.getVariations()) {
+                                    totalStock += var.getStockQuantity();
+                                }
+                                product.setStockQuantity(totalStock);
+                            } else {
+                                product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                            }
                         } else {
                             product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
                         }
-                    } else {
-                        product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                        String prodId = product.getId();
+                        if (prodId != null) {
+                            productService.updateProduct(prodId, product);
+                        }
                     }
-                    productService.updateProduct(product.getId(), product);
                 }
             } catch (Exception e) {
                 // Ignore if product was deleted from catalog

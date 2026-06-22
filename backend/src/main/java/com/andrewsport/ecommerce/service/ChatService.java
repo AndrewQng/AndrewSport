@@ -84,15 +84,16 @@ public class ChatService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
             ResponseEntity<?> response = restTemplate.postForEntity(url, entity, Map.class);
-
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            if (response.getStatusCode().is2xxSuccessful()) {
                 Map<?, ?> responseBody = (Map<?, ?>) response.getBody();
-                List<?> choices = (List<?>) responseBody.get("choices");
-                if (choices != null && !choices.isEmpty()) {
-                    Map<?, ?> choice = (Map<?, ?>) choices.get(0);
-                    Map<?, ?> msgObj = (Map<?, ?>) choice.get("message");
-                    if (msgObj != null) {
-                        return (String) msgObj.get("content");
+                if (responseBody != null) {
+                    List<?> choices = (List<?>) responseBody.get("choices");
+                    if (choices != null && !choices.isEmpty()) {
+                        Map<?, ?> choice = (Map<?, ?>) choices.get(0);
+                        Map<?, ?> msgObj = (Map<?, ?>) choice.get("message");
+                        if (msgObj != null) {
+                            return (String) msgObj.get("content");
+                        }
                     }
                 }
             }

@@ -39,3 +39,8 @@ _Avoid_: Two-factor token, authentication code
 **Assistant (Trợ lý AI)**:
 An AI-powered consultant component (ChatGPT Assistant) embedded in the user interface to recommend sports gear matching the user's level and playstyle. It operates with a dynamic OpenAI configuration or falls back to an offline list.
 _Avoid_: Chatbot, support bot, support agent
+
+**Coupon (Mã giảm giá)**:
+A promotional code applied to an order during checkout to receive a discount. It follows predefined validation rules (e.g. fixed deduction or percentage up to a maximum amount).
+_Avoid_: Voucher, promo code, discount, gift card
+

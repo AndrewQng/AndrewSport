@@ -60,8 +60,6 @@ export default function Register({ onLoginSuccess }) {
       };
       const response = await api.post('/auth/register/verify-otp', payload);
       const { token, refreshToken, username, role, fullName } = response.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', refreshToken);
       message.success(`Đăng ký tài khoản thành công! Chào mừng bạn, ${fullName}!`);
       onLoginSuccess({ username, role, fullName });
       navigate('/');

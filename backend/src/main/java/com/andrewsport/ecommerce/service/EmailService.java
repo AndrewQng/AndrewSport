@@ -15,6 +15,7 @@ public class EmailService {
     @Value("${spring.mail.username:}")
     private String mailUsername;
 
+    @SuppressWarnings("null")
     public void sendOtpEmail(String toEmail, String otpCode, String typeName) {
         System.out.println("=========================================");
         System.out.println("OTP CODE FOR " + toEmail + " (" + typeName + "): " + otpCode);
@@ -31,11 +32,6 @@ public class EmailService {
             Class<?> simpleMailMessageClass = Class.forName("org.springframework.mail.SimpleMailMessage");
 
             Object mailSender = context.getBean(mailSenderClass);
-            if (mailSender == null) {
-                System.out.println("SMTP Mail Sender bean is not available in context. OTP printed above.");
-                return;
-            }
-
             Object message = simpleMailMessageClass.getDeclaredConstructor().newInstance();
             
             Method setFrom = simpleMailMessageClass.getMethod("setFrom", String.class);

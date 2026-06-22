@@ -50,8 +50,6 @@ export default function Login({ onLoginSuccess }) {
         return;
       }
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', refreshToken);
       message.success(`Chào mừng quay lại, ${fullName}!`);
       onLoginSuccess({ username, role, fullName });
       navigate('/');
@@ -145,8 +143,6 @@ export default function Login({ onLoginSuccess }) {
       const response = await api.post('/auth/social-login', payload);
       const { token, refreshToken, username, role, fullName } = response.data;
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', refreshToken);
       message.success(`Đăng nhập bằng ${socialProvider} thành công! Chào mừng, ${fullName}!`);
       onLoginSuccess({ username, role, fullName });
       setSocialVisible(false);

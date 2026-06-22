@@ -216,6 +216,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @SuppressWarnings("null")
     public AuthResponse socialLogin(SocialLoginRequest request) {
         String provider = request.getProvider().toUpperCase();
         String providerId = request.getProviderId();

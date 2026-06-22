@@ -1,19 +1,13 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api'
+  baseURL: 'http://localhost:8080/api',
+  withCredentials: true
 });
 
-// Request Interceptor: Attach access token based on role/path
+// Request Interceptor
 api.interceptors.request.use(
   (config) => {
-    const isAdminPath = window.location.pathname.startsWith('/admin');
-    const tokenKey = isAdminPath ? 'admin_token' : 'token';
-    const token = localStorage.getItem(tokenKey);
-    
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => {
@@ -32,38 +26,31 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       
       const isAdminPath = window.location.pathname.startsWith('/admin');
-      const refreshKey = isAdminPath ? 'admin_refreshToken' : 'refreshToken';
-      const tokenKey = isAdminPath ? 'admin_token' : 'token';
-      const refreshToken = localStorage.getItem(refreshKey);
       
-      if (refreshToken) {
-        try {
-          // Perform call to refresh token endpoint
-          // Use axios directly to prevent interceptor looping
-          const response = await axios.post('http://localhost:8080/api/auth/refresh', {
-            refreshToken: refreshToken
-          });
-          
-          const { accessToken, refreshToken: newRefreshToken } = response.data;
-          
-          localStorage.setItem(tokenKey, accessToken);
-          localStorage.setItem(refreshKey, newRefreshToken);
-          
-          // Retry original request with new access token
-          originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
-          return api(originalRequest);
-        } catch (refreshError) {
-          // Refresh token expired or invalid, log out user
-          localStorage.removeItem(tokenKey);
-          localStorage.removeItem(refreshKey);
-          
-          if (isAdminPath) {
-            window.location.href = '/admin/login';
-          } else {
-            window.location.href = '/login';
-          }
-          return Promise.reject(refreshError);
+      try {
+        // Perform call to refresh token endpoint using cookies
+        await axios.post('http://localhost:8080/api/auth/refresh', {}, {
+          withCredentials: true
+        });
+        
+        // Retry original request (browser will attach cookies automatically)
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Refresh token expired or invalid, clear local display state and redirect
+        const tokenKey = isAdminPath ? 'admin_token' : 'token';
+        const refreshKey = isAdminPath ? 'admin_refreshToken' : 'refreshToken';
+        localStorage.removeItem(tokenKey);
+        localStorage.removeItem(refreshKey);
+        localStorage.removeItem('username');
+        localStorage.removeItem('role');
+        localStorage.removeItem('fullName');
+        
+        if (isAdminPath) {
+          window.location.href = '/admin/login';
+        } else {
+          window.location.href = '/login';
         }
+        return Promise.reject(refreshError);
       }
     }
     

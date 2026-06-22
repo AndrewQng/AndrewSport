@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/stats")
-@CrossOrigin(origins = "*")
 public class AdminStatsController {
 
     @Autowired

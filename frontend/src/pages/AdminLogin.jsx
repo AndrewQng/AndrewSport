@@ -24,8 +24,6 @@ export default function AdminLogin({ onLoginSuccess }) {
         return;
       }
 
-      localStorage.setItem('admin_token', token);
-      localStorage.setItem('admin_refreshToken', refreshToken);
       message.success(`Chào mừng Admin quay lại, ${fullName}!`);
       onLoginSuccess({ username, role, fullName });
       navigate('/admin');

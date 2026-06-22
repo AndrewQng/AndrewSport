@@ -6,12 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.lang.NonNull;
 import java.security.Principal;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
-@CrossOrigin(origins = "*")
 public class OrderController {
 
     @Autowired
@@ -36,12 +36,12 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<Order> updateOrderStatus(@PathVariable String id, @RequestParam String status) {
+    public ResponseEntity<Order> updateOrderStatus(@PathVariable @NonNull String id, @RequestParam String status) {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, status));
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelOrder(@PathVariable String id, Principal principal) {
+    public ResponseEntity<?> cancelOrder(@PathVariable @NonNull String id, Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(401).body(java.util.Map.of("message", "Vui lòng đăng nhập!"));
         }

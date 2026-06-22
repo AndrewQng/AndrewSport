@@ -5,6 +5,7 @@ import com.andrewsport.ecommerce.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product getProductById(String id) {
+    public Product getProductById(@NonNull String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
     }
@@ -50,7 +51,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product updateProduct(String id, Product productDetails) {
+    public Product updateProduct(@NonNull String id, Product productDetails) {
         Product product = getProductById(id);
         
         product.setName(productDetails.getName());
@@ -68,7 +69,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void deleteProduct(String id) {
+    public void deleteProduct(@NonNull String id) {
         Product product = getProductById(id);
         product.setStatus("DELETED");
         productRepository.save(product);

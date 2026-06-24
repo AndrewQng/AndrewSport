@@ -2,7 +2,7 @@ import React from 'react';
 import { Table, Button, InputNumber, Space, Typography, Card, Row, Col, Empty } from 'antd';
 import { DeleteOutlined, ShoppingCartOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { formatVND } from '../utils/format';
+import { formatVND, getProductImage } from '../utils/format';
 
 const { Title, Text } = Typography;
 
@@ -17,7 +17,7 @@ export default function Cart({ cart, onUpdateCartQty, onRemoveFromCart }) {
       key: 'name',
       render: (text, record) => (
         <Space>
-          <img src={record.imageUrl} alt={text} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 6 }} />
+          <img src={getProductImage(record)} alt={text} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 6 }} />
           <div>
             <Text strong style={{ fontSize: 14 }}>{text}</Text>
             {record.variationDetail && (

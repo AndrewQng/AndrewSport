@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Row, Col, Typography, Empty, Button } from 'antd';
+import { Row, Col, Typography, Empty, Button, Carousel } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import ProductCard from '../ProductCard';
 import { categoryBanners } from '../../constants/productFilters';
@@ -17,6 +17,38 @@ export default function LandingView({
 }) {
   const carouselRef = useRef(null);
   const saleCarouselRef = useRef(null);
+  const bannerCarouselRef = useRef(null);
+
+  const banners = [
+    {
+      image: '/images/astrox99_banner.png',
+      title: 'YONEX ASTROX 99 PRO',
+      subtitle: 'Sức mạnh đập cầu bộc phá - Sự lựa chọn tối thượng của các nhà vô địch tấn công',
+      category: 'Badminton',
+      search: 'Astrox'
+    },
+    {
+      image: '/images/astrox100zz_banner.png',
+      title: 'YONEX ASTROX 100ZZ',
+      subtitle: 'Tốc độ vung vợt đỉnh cao cùng độ chính xác tuyệt đối trên từng pha cầu',
+      category: 'Badminton',
+      search: 'Astrox'
+    },
+    {
+      image: '/images/apparel_banner_1.png',
+      title: 'THỜI TRANG BẢN LĨNH',
+      subtitle: 'Bộ sưu tập quần áo cầu lông cao cấp, thoáng khí và co giãn vượt trội',
+      category: 'Badminton',
+      subCategory: 'áo'
+    },
+    {
+      image: '/images/apparel_banner_2.png',
+      title: 'NĂNG ĐỘNG BẤT TẬN',
+      subtitle: 'Trang phục thể thao cá tính mang lại sự tự tin bứt phá mọi giới hạn trên sân đấu',
+      category: 'Badminton',
+      subCategory: 'quần'
+    }
+  ];
 
   const scrollCarousel = (direction, refObj) => {
     if (refObj.current) {
@@ -32,16 +64,154 @@ export default function LandingView({
     setSearchParams(params);
   };
 
+  const handlePromoClick = (banner) => {
+    const params = {};
+    if (banner.category) params.category = banner.category;
+    if (banner.subCategory) params.subCategory = banner.subCategory;
+    if (banner.search) params.search = banner.search;
+    setSearchParams(params);
+  };
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
-      {/* Simple Banner Image */}
-      <div style={{ width: '100%', height: '350px', background: 'linear-gradient(135deg, #FEE2E2 0%, #FEF2F2 100%)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 40, overflow: 'hidden', position: 'relative' }}>
-        <div style={{ padding: '0 60px', zIndex: 2 }}>
-          <Title level={1} style={{ color: '#DC2626', fontWeight: 900, fontSize: '42px', margin: '0 0 16px 0' }}>ANDREWSPORT</Title>
-          <Title level={3} style={{ color: '#0f172a', fontWeight: 700, margin: 0 }}>Hệ thống cửa hàng dụng cụ thể thao lớn nhất Việt Nam</Title>
-          <Text type="secondary" style={{ fontSize: '16px', display: 'block', marginTop: '12px' }}>Chuyên cung cấp vợt cầu lông, vợt tennis, vợt pickleball và phụ kiện chính hãng.</Text>
-        </div>
-        <div style={{ position: 'absolute', right: '5%', bottom: '-10%', width: '400px', height: '400px', background: '#DC2626', opacity: 0.05, borderRadius: '50%' }}></div>
+      {/* Dynamic Banner Carousel */}
+      <div 
+        className="banner-carousel-container"
+        style={{ 
+          marginBottom: 40, 
+          borderRadius: '16px', 
+          overflow: 'hidden', 
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.08)',
+          position: 'relative'
+        }}
+      >
+        {/* Custom Left Arrow Button */}
+        <Button 
+          shape="circle" 
+          icon={<LeftOutlined />} 
+          onClick={(e) => {
+            e.stopPropagation();
+            bannerCarouselRef.current?.prev();
+          }}
+          className="banner-arrow-btn"
+          style={{
+            position: 'absolute',
+            left: '24px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 10,
+            border: 'none',
+            background: 'rgba(15, 23, 42, 0.45)',
+            color: '#ffffff',
+            width: '46px',
+            height: '46px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(4px)'
+          }}
+        />
+
+        {/* Custom Right Arrow Button */}
+        <Button 
+          shape="circle" 
+          icon={<RightOutlined />} 
+          onClick={(e) => {
+            e.stopPropagation();
+            bannerCarouselRef.current?.next();
+          }}
+          className="banner-arrow-btn"
+          style={{
+            position: 'absolute',
+            right: '24px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 10,
+            border: 'none',
+            background: 'rgba(15, 23, 42, 0.45)',
+            color: '#ffffff',
+            width: '46px',
+            height: '46px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(4px)'
+          }}
+        />
+
+        <Carousel 
+          ref={bannerCarouselRef}
+          autoplay 
+          effect="scrollx" 
+          speed={800} 
+          autoplaySpeed={5000}
+          draggable
+          swipeToSlide
+        >
+          {banners.map((banner, idx) => {
+            return (
+              <div key={idx}>
+                <div 
+                  style={{ 
+                    position: 'relative', 
+                    height: '380px', 
+                    width: '100%',
+                    backgroundImage: 'url(' + banner.image + ')',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    borderRadius: '16px',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {/* Premium Dark Gradient Overlay */}
+                  <div 
+                    style={{ 
+                      position: 'absolute', 
+                      top: 0, 
+                      left: 0, 
+                      width: '100%', 
+                      height: '100%', 
+                      background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.45) 50%, rgba(15, 23, 42, 0) 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0 80px',
+                      zIndex: 2
+                    }}
+                  >
+                    <div className="banner-text-container">
+                      <Text style={{ color: '#E95211', fontWeight: 800, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '2px', display: 'block', marginBottom: '8px' }}>
+                        Sản Phẩm Cao Cấp
+                      </Text>
+                      <Title level={1} style={{ color: '#ffffff', fontWeight: 900, fontSize: '38px', margin: '0 0 12px 0', lineHeight: '1.2', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                        {banner.title}
+                      </Title>
+                      <Text style={{ color: '#cbd5e1', fontSize: '16px', display: 'block', marginBottom: '24px', fontWeight: 500, lineHeight: '1.6' }}>
+                        {banner.subtitle}
+                      </Text>
+                      <Button 
+                        type="primary" 
+                        size="large" 
+                        onClick={() => handlePromoClick(banner)}
+                        style={{ 
+                          background: '#E95211', 
+                          borderColor: '#E95211', 
+                          fontWeight: 700, 
+                          borderRadius: '8px',
+                          padding: '0 32px',
+                          height: '46px',
+                          fontSize: '15px',
+                          boxShadow: '0 4px 14px rgba(233, 82, 17, 0.4)'
+                        }}
+                      >
+                        Khám phá ngay
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </Carousel>
       </div>
 
       {/* 0. Flash Sale Section */}

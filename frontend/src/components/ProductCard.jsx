@@ -2,9 +2,9 @@ import React from 'react';
 import { Card, Button, Tag, Typography, Space, Rate } from 'antd';
 import { ShoppingCartOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { formatVND } from '../utils/format';
+import { formatVND, getProductImage } from '../utils/format';
 
-const { Text, Title } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
 export default function ProductCard({ product, onAddToCart }) {
   const navigate = useNavigate();
@@ -65,7 +65,7 @@ export default function ProductCard({ product, onAddToCart }) {
         >
           <img
             alt={product.name}
-            src={product.imageUrl || 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=400'}
+            src={getProductImage(product)}
             style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
             className="card-image"
           />
@@ -107,14 +107,14 @@ export default function ProductCard({ product, onAddToCart }) {
             {product.name}
           </Title>
           
-          <Text 
+          <Paragraph 
             type="secondary" 
             ellipsis={{ rows: 2 }} 
             className="hide-on-mobile"
             style={{ fontSize: '14px', display: 'block', height: '40px', marginBottom: '16px', lineHeight: '1.4' }}
           >
             {product.description}
-          </Text>
+          </Paragraph>
         </div>
 
         <div>

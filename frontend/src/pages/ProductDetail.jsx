@@ -3,7 +3,7 @@ import { Row, Col, Typography, Button, Tag, Space, Table, Tabs, Card, Breadcrumb
 import { ShoppingCartOutlined, TrophyOutlined, GiftOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { formatVND } from '../utils/format';
+import { formatVND, getProductImage } from '../utils/format';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -402,7 +402,7 @@ export default function ProductDetail({ onAddToCart, user }) {
             styles={{ body: { padding: 12 } }} 
             cover={
               <img 
-                src={product.imageUrl} 
+                src={getProductImage(product)} 
                 alt={product.name} 
                 style={{ width: '100%', borderRadius: 8, height: '400px', objectFit: 'cover' }}
               />

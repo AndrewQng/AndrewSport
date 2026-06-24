@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button, Tag, Typography, Rate, Space } from 'antd';
 import { FireFilled, TrophyOutlined, ShoppingCartOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { formatVND } from '../../utils/format';
+import { formatVND, getProductImage } from '../../utils/format';
 
 const { Text, Title } = Typography;
 
@@ -189,7 +189,7 @@ export default function FlashSale({ products, onAddToCart }) {
                       style={{ height: '160px', width: '100%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', cursor: 'pointer', background: '#f8fafc', marginBottom: 12 }}
                     >
                       <img 
-                        src={product.imageUrl} 
+                        src={getProductImage(product)} 
                         alt={product.name} 
                         style={{ height: '100%', objectFit: 'contain', transition: 'transform 0.3s ease' }} 
                         className="card-image"

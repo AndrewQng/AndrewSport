@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { formatVND, getOrderStatusTag } from '../utils/format';
+import { formatVND, getOrderStatusTag, getProductImage } from '../utils/format';
 import StatsCards from '../components/admin/StatsCards';
 import RevenueChart from '../components/admin/RevenueChart';
 
@@ -212,7 +212,7 @@ export default function AdminDashboard({ onLogout }) {
       key: 'name',
       render: (text, record) => (
         <Space>
-          <img src={record.imageUrl} alt={text} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
+          <img src={getProductImage(record)} alt={text} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
           <div>
             <span style={{ fontWeight: 600 }}>{text}</span>
             {record.isFlashSale && <Tag color="warning" style={{ marginLeft: 6, fontSize: '10px', fontWeight: 700 }}>⚡ FLASH SALE</Tag>}

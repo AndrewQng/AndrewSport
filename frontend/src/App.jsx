@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, message, ConfigProvider } from 'antd';
+import { Layout, message, ConfigProvider, Modal } from 'antd';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ChatbotDrawer from './components/ChatbotDrawer';
@@ -13,6 +13,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import ProductDetail from './pages/ProductDetail';
 import api from './services/api';
+import { themeConfig } from './theme';
 
 const { Content, Footer } = Layout;
 
@@ -20,6 +21,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [cart, setCart] = useState([]);
   const [initializing, setInitializing] = useState(true);
+  const [modal, modalContextHolder] = Modal.useModal();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -50,6 +52,31 @@ export default function App() {
       setUser(response.data);
     } catch (e) {
       setUser(null);
+      
+      // Hiển thị thông báo thân thiện cho khách vãng lai truy cập lần đầu trong phiên
+      const hasWelcomed = sessionStorage.getItem('guest_welcomed');
+      const isLoginOrRegister = location.pathname === '/login' || 
+                                location.pathname === '/register' || 
+                                location.pathname.startsWith('/admin');
+                                
+      if (!hasWelcomed && !isLoginOrRegister) {
+        modal.info({
+          title: 'Chào mừng bạn đến với AndrewSport!',
+          content: 'Bạn hiện chưa đăng nhập tài khoản. Bạn vẫn có thể tự do xem sản phẩm và thêm vào giỏ hàng, hãy đăng nhập khi đặt hàng để nhận thêm nhiều ưu đãi nhé!',
+          okText: 'Đăng nhập ngay',
+          cancelText: 'Trải nghiệm tiếp',
+          okCancel: true,
+          maskClosable: true, // Cho phép click ra ngoài để đóng
+          closable: true,     // Hiện nút X ở góc
+          styles: {
+            body: { padding: '12px' }
+          },
+          onOk: () => {
+            navigate('/login');
+          }
+        });
+        sessionStorage.setItem('guest_welcomed', 'true');
+      }
     }
     setInitializing(false);
   };
@@ -160,15 +187,8 @@ export default function App() {
 
   if (isAdminPath) {
     return (
-      <ConfigProvider
-        theme={{
-          token: {
-            colorPrimary: '#DC2626',
-            borderRadius: 8,
-            fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',
-          },
-        }}
-      >
+      <ConfigProvider theme={themeConfig}>
+        {modalContextHolder}
         <Routes>
           <Route path="/admin/login" element={<AdminLogin onLoginSuccess={setUser} />} />
           <Route
@@ -188,15 +208,8 @@ export default function App() {
   }
 
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: '#DC2626',
-          borderRadius: 8,
-          fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',
-        },
-      }}
-    >
+    <ConfigProvider theme={themeConfig}>
+      {modalContextHolder}
       <Layout style={{ minHeight: '100vh', background: '#f8fafc' }}>
         <Navbar
           user={user}
@@ -220,6 +233,7 @@ export default function App() {
               element={
                 <ProductDetail
                   onAddToCart={handleAddToCart}
+                  user={user}
                 />
               }
             />

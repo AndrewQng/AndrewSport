@@ -44,3 +44,12 @@ _Avoid_: Chatbot, support bot, support agent
 A promotional code applied to an order during checkout to receive a discount. It follows predefined validation rules (e.g. fixed deduction or percentage up to a maximum amount).
 _Avoid_: Voucher, promo code, discount, gift card
 
+**Refund (Yêu cầu hoàn tiền)**:
+A customer request to return a product and receive a refund. It must reference a valid `orderId` (acting as the invoice key), be submitted within 7 days of the order, and include a photo verifying the product is intact.
+_Avoid_: Return, payback
+
+**Warranty (Yêu cầu bảo hành)**:
+A customer request for product warranty service. It must reference a valid `orderId` (acting as the invoice key), describe the product issue, include a photo of the product, and specify the system-provided `warrantyCode`.
+_Avoid_: Repair, guarantee
+
+

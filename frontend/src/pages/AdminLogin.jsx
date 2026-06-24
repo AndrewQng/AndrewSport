@@ -52,7 +52,7 @@ export default function AdminLogin({ onLoginSuccess }) {
           border: '1px solid #334155',
           background: '#1e293b'
         }}
-        bodyStyle={{ padding: '36px 24px' }}
+        styles={{ body: { padding: '36px 24px' } }}
       >
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{ 

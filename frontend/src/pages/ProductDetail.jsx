@@ -7,7 +7,7 @@ import { formatVND } from '../utils/format';
 
 const { Title, Text, Paragraph } = Typography;
 
-export default function ProductDetail({ onAddToCart }) {
+export default function ProductDetail({ onAddToCart, user }) {
   const { productId } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
@@ -82,7 +82,7 @@ export default function ProductDetail({ onAddToCart }) {
   const [userReviewRating, setUserReviewRating] = useState(5);
   const [userReviewComment, setUserReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
-  const isLoggedIn = !!localStorage.getItem('token');
+  const isLoggedIn = !!user;
 
   useEffect(() => {
     fetchProductDetails();
@@ -377,11 +377,14 @@ export default function ProductDetail({ onAddToCart }) {
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Breadcrumb Navigation */}
-      <Breadcrumb style={{ marginBottom: 20 }}>
-        <Breadcrumb.Item><a onClick={() => navigate('/')}>Trang chủ</a></Breadcrumb.Item>
-        <Breadcrumb.Item><a onClick={() => navigate(`/?category=${product.category}`)}>{product.category === 'Badminton' ? 'Cầu lông' : product.category}</a></Breadcrumb.Item>
-        <Breadcrumb.Item>{product.name}</Breadcrumb.Item>
-      </Breadcrumb>
+      <Breadcrumb 
+        style={{ marginBottom: 20 }}
+        items={[
+          { title: <a onClick={() => navigate('/')}>Trang chủ</a> },
+          { title: <a onClick={() => navigate(`/?category=${product.category}`)}>{product.category === 'Badminton' ? 'Cầu lông' : product.category}</a> },
+          { title: product.name }
+        ]}
+      />
 
       <Button 
         type="text" 
@@ -396,7 +399,7 @@ export default function ProductDetail({ onAddToCart }) {
         {/* Product Images (Left) */}
         <Col xs={24} md={11}>
           <Card 
-            bodyStyle={{ padding: 12 }} 
+            styles={{ body: { padding: 12 } }} 
             cover={
               <img 
                 src={product.imageUrl} 

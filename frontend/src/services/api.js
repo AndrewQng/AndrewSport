@@ -21,6 +21,17 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    // Check if the request was to an authentication endpoint.
+    // If so, do not attempt token refresh or automatic redirection to prevent infinite reload loops.
+    const isAuthRequest = originalRequest.url?.includes('/auth/me') || 
+                          originalRequest.url?.includes('/auth/login') || 
+                          originalRequest.url?.includes('/auth/refresh') ||
+                          originalRequest.url?.includes('/auth/logout');
+                          
+    if (isAuthRequest) {
+      return Promise.reject(error);
+    }
+    
     // Check if error is 401 and request has not been retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -45,10 +56,15 @@ api.interceptors.response.use(
         localStorage.removeItem('role');
         localStorage.removeItem('fullName');
         
+        const currentPath = window.location.pathname;
         if (isAdminPath) {
-          window.location.href = '/admin/login';
+          if (currentPath !== '/admin/login') {
+            window.location.href = '/admin/login';
+          }
         } else {
-          window.location.href = '/login';
+          if (currentPath !== '/login') {
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(refreshError);
       }

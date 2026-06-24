@@ -20,6 +20,7 @@ public class Order {
     private String shippingAddress;
     private String couponCode;
     private Double discountAmount;
+    private LocalDateTime deliveryDate;
 
     public Order() {}
 
@@ -129,5 +130,13 @@ public class Order {
 
     public void setDiscountAmount(Double discountAmount) {
         this.discountAmount = discountAmount;
+    }
+
+    public LocalDateTime getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(LocalDateTime deliveryDate) {
+        this.deliveryDate = deliveryDate;
     }
 }

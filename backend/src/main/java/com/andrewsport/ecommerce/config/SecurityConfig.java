@@ -42,6 +42,13 @@ public class SecurityConfig {
             .cors(cors -> {})
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"message\": \"Bạn chưa đăng nhập! Vui lòng đăng nhập để tiếp tục.\"}");
+                })
+            )
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers("/api/auth/**").permitAll()
@@ -59,6 +66,10 @@ public class SecurityConfig {
                 // Admin orders control
                 .requestMatchers(HttpMethod.GET, "/api/orders").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasAuthority("ADMIN")
+                
+                // Admin refunds and warranties control
+                .requestMatchers("/api/refunds/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/warranties/admin/**").hasAuthority("ADMIN")
                 
                 // Authenticated user endpoints
                 .anyRequest().authenticated()

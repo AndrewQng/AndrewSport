@@ -28,6 +28,7 @@ public class Product {
     private String level;
     private java.util.List<String> technologies;
     private java.util.List<ProductVariation> variations;
+    private Integer warrantyPeriod = 12;
 
     public Product() {}
 
@@ -217,6 +218,14 @@ public class Product {
 
     public void setFlashSalePrice(Double flashSalePrice) {
         this.flashSalePrice = flashSalePrice;
+    }
+
+    public Integer getWarrantyPeriod() {
+        return warrantyPeriod != null ? warrantyPeriod : 12;
+    }
+
+    public void setWarrantyPeriod(Integer warrantyPeriod) {
+        this.warrantyPeriod = warrantyPeriod;
     }
 }
 

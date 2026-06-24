@@ -5,6 +5,7 @@ import com.andrewsport.ecommerce.model.OrderItem;
 import com.andrewsport.ecommerce.model.Product;
 import com.andrewsport.ecommerce.model.User;
 import com.andrewsport.ecommerce.repository.OrderRepository;
+import com.andrewsport.ecommerce.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +21,19 @@ public class OrderServiceImpl implements OrderService {
     private OrderRepository orderRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ProductService productService;
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private ProductWarrantyService productWarrantyService;
 
     @Override
     @Transactional
@@ -104,7 +114,18 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderStatus("PROCESSING");
         order.setPaymentStatus("PAID");
         
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        // Gửi email hóa đơn bất đồng bộ
+        try {
+            userRepository.findById(savedOrder.getUserId()).ifPresent(user -> {
+                new Thread(() -> emailService.sendOrderInvoiceEmail(savedOrder, user.getEmail())).start();
+            });
+        } catch (Exception e) {
+            System.err.println("Không thể gửi email hóa đơn: " + e.getMessage());
+        }
+
+        return savedOrder;
     }
 
     @Override
@@ -124,6 +145,17 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
         order.setOrderStatus(status);
+        
+        if ("DELIVERED".equals(status)) {
+            order.setDeliveryDate(LocalDateTime.now());
+            // Sinh mã bảo hành cho các sản phẩm trong đơn hàng
+            try {
+                productWarrantyService.generateWarrantiesForOrder(order);
+            } catch (Exception e) {
+                System.err.println("Không thể sinh mã bảo hành: " + e.getMessage());
+            }
+        }
+        
         return orderRepository.save(order);
     }
 

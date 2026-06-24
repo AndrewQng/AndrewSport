@@ -443,7 +443,7 @@ export default function Navbar({ user, cart, onLogout, onSearch, onCategoryBrand
         placement="left"
         onClose={() => setMobileMenuOpen(false)}
         open={mobileMenuOpen}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
       >
         <Menu
           mode="inline"

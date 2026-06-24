@@ -385,7 +385,7 @@ export default function Login({ onLoginSuccess }) {
         destroyOnClose
         closable={!socialLoading}
         width={440}
-        bodyStyle={{ padding: '24px 32px' }}
+        styles={{ body: { padding: '24px 32px' } }}
       >
         {socialStep === 1 ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>

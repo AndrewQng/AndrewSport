@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.format.DateTimeFormatter;
 
 @Service
+@SuppressWarnings("null")
 public class EmailService {
 
     @Autowired(required = false)

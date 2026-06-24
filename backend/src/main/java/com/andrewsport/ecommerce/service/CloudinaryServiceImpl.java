@@ -41,14 +41,14 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         }
 
         // Upload the file bytes directly to Cloudinary
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+        Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
 
         // Retrieve public ID of the uploaded image
         String publicId = (String) uploadResult.get("public_id");
 
         // Generate and return optimized image URL (f_auto, q_auto)
         return cloudinary.url()
-                .transformation(new Transformation()
+                .transformation(new Transformation<>()
                         .fetchFormat("auto") // Automatic format selection
                         .quality("auto")     // Automatic quality compression
                 )

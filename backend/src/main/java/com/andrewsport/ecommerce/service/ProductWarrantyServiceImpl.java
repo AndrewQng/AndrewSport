@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Random;
 
 @Service
+@SuppressWarnings("null")
 public class ProductWarrantyServiceImpl implements ProductWarrantyService {
 
     @Autowired

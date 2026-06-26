@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Table, Tabs, Card, Button, Modal, Form, Input, InputNumber, 
-  Select, Space, Popconfirm, Tag, Select as StatusSelect, message, 
-  Row, Col, Image, Divider 
+import {
+  Tabs, Card, Button, Modal, Form, Input, InputNumber,
+  Select, Space, Tag, Table, message, Row, Col, Divider,
 } from 'antd';
-import { 
-  PlusOutlined, EditOutlined, DeleteOutlined, ShoppingCartOutlined, 
-  UserOutlined, DatabaseOutlined, LineChartOutlined, LogoutOutlined,
-  DollarCircleOutlined, SafetyCertificateOutlined, CheckOutlined, CloseOutlined 
+import {
+  PlusOutlined, EditOutlined, LogoutOutlined,
+  DollarCircleOutlined, SafetyCertificateOutlined, CheckOutlined, CloseOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { formatVND, getOrderStatusTag, getProductImage } from '../utils/format';
+import { formatVND } from '../utils/format';
+
 import StatsCards from '../components/admin/StatsCards';
 import RevenueChart from '../components/admin/RevenueChart';
+import ProductTable from '../components/admin/ProductTable';
+import ProductDetailModal from '../components/admin/ProductDetailModal';
+import OrderTable from '../components/admin/OrderTable';
+import RefundClaimsTable from '../components/admin/RefundClaimsTable';
+import WarrantyClaimsTable from '../components/admin/WarrantyClaimsTable';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -22,25 +26,27 @@ export default function AdminDashboard({ onLogout }) {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
-  
-  // Claims states
   const [refundClaims, setRefundClaims] = useState([]);
   const [warrantyClaims, setWarrantyClaims] = useState([]);
-  const [loadingRefunds, setLoadingRefunds] = useState(false);
-  const [loadingWarranties, setLoadingWarranties] = useState(false);
 
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [loadingRefunds, setLoadingRefunds] = useState(false);
+  const [loadingWarranties, setLoadingWarranties] = useState(false);
 
-  // Product modal state
+  // Product add/edit modal
   const [modalOpen, setModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [editingProductId, setEditingProductId] = useState(null);
-  
-  // Action Modal State (for entering admin comment during approve/reject)
+
+  // Product detail view modal
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // Claim action modal
   const [actionModalOpen, setActionModalOpen] = useState(false);
-  const [actionType, setActionType] = useState(''); // 'approve_refund', 'reject_refund', 'approve_warranty', 'reject_warranty'
+  const [actionType, setActionType] = useState('');
   const [selectedClaimId, setSelectedClaimId] = useState(null);
   const [actionForm] = Form.useForm();
 
@@ -54,12 +60,13 @@ export default function AdminDashboard({ onLogout }) {
     fetchWarrantyClaims();
   }, []);
 
+  // ── Fetchers ──────────────────────────────────────────────
   const fetchProducts = async () => {
     try {
       setLoadingProducts(true);
-      const response = await api.get('/products');
-      setProducts(response.data);
-    } catch (error) {
+      const res = await api.get('/products');
+      setProducts(res.data);
+    } catch {
       message.error('Không thể tải danh sách sản phẩm');
     } finally {
       setLoadingProducts(false);
@@ -69,9 +76,9 @@ export default function AdminDashboard({ onLogout }) {
   const fetchOrders = async () => {
     try {
       setLoadingOrders(true);
-      const response = await api.get('/orders');
-      setOrders(response.data);
-    } catch (error) {
+      const res = await api.get('/orders');
+      setOrders(res.data);
+    } catch {
       message.error('Không thể tải danh sách đơn hàng');
     } finally {
       setLoadingOrders(false);
@@ -81,9 +88,9 @@ export default function AdminDashboard({ onLogout }) {
   const fetchStats = async () => {
     try {
       setLoadingStats(true);
-      const response = await api.get('/admin/stats');
-      setStats(response.data);
-    } catch (error) {
+      const res = await api.get('/admin/stats');
+      setStats(res.data);
+    } catch {
       message.error('Không thể tải thống kê báo cáo.');
     } finally {
       setLoadingStats(false);
@@ -93,10 +100,10 @@ export default function AdminDashboard({ onLogout }) {
   const fetchRefundClaims = async () => {
     try {
       setLoadingRefunds(true);
-      const response = await api.get('/refunds/admin/all');
-      setRefundClaims(response.data);
-    } catch (error) {
-      console.error('Không thể tải yêu cầu hoàn tiền:', error);
+      const res = await api.get('/refunds/admin/all');
+      setRefundClaims(res.data);
+    } catch (err) {
+      console.error('Không thể tải yêu cầu hoàn tiền:', err);
     } finally {
       setLoadingRefunds(false);
     }
@@ -105,15 +112,16 @@ export default function AdminDashboard({ onLogout }) {
   const fetchWarrantyClaims = async () => {
     try {
       setLoadingWarranties(true);
-      const response = await api.get('/warranties/admin/all');
-      setWarrantyClaims(response.data);
-    } catch (error) {
-      console.error('Không thể tải yêu cầu bảo hành:', error);
+      const res = await api.get('/warranties/admin/all');
+      setWarrantyClaims(res.data);
+    } catch (err) {
+      console.error('Không thể tải yêu cầu bảo hành:', err);
     } finally {
       setLoadingWarranties(false);
     }
   };
 
+  // ── Product handlers ──────────────────────────────────────
   const handleOpenAddModal = () => {
     setEditingProductId(null);
     form.resetFields();
@@ -124,6 +132,11 @@ export default function AdminDashboard({ onLogout }) {
     setEditingProductId(record.id);
     form.setFieldsValue(record);
     setModalOpen(true);
+  };
+
+  const handleViewDetail = (record) => {
+    setSelectedProduct(record);
+    setDetailModalOpen(true);
   };
 
   const handleModalSubmit = async () => {
@@ -139,7 +152,7 @@ export default function AdminDashboard({ onLogout }) {
       setModalOpen(false);
       fetchProducts();
       fetchStats();
-    } catch (error) {
+    } catch {
       message.error('Vui lòng kiểm tra lại thông tin form.');
     }
   };
@@ -150,23 +163,24 @@ export default function AdminDashboard({ onLogout }) {
       message.success('Đã xóa sản phẩm.');
       fetchProducts();
       fetchStats();
-    } catch (error) {
+    } catch {
       message.error('Không thể xóa sản phẩm.');
     }
   };
 
+  // ── Order handlers ────────────────────────────────────────
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
       await api.put(`/orders/${orderId}/status?status=${newStatus}`);
       message.success(`Cập nhật trạng thái đơn hàng sang ${newStatus}.`);
       fetchOrders();
       fetchStats();
-    } catch (error) {
+    } catch {
       message.error('Không thể cập nhật trạng thái đơn hàng.');
     }
   };
 
-  // Open action modal
+  // ── Claim handlers ────────────────────────────────────────
   const openActionModal = (type, claimId) => {
     setActionType(type);
     setSelectedClaimId(claimId);
@@ -174,7 +188,6 @@ export default function AdminDashboard({ onLogout }) {
     setActionModalOpen(true);
   };
 
-  // Submit Claim Action (Approve/Reject)
   const handleActionSubmit = async (values) => {
     const comment = values.adminComment || '';
     try {
@@ -201,275 +214,29 @@ export default function AdminDashboard({ onLogout }) {
     }
   };
 
-  const handleAdminLogout = () => {
-    onLogout();
-  };
-
-  const productColumns = [
+  // ── Top-products columns (local — small, no extraction needed) ──
+  const topProductColumns = [
     {
-      title: 'Sản phẩm',
+      title: 'Tên vợt/sản phẩm',
       dataIndex: 'name',
       key: 'name',
-      render: (text, record) => (
-        <Space>
-          <img src={getProductImage(record)} alt={text} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
-          <div>
-            <span style={{ fontWeight: 600 }}>{text}</span>
-            {record.isFlashSale && <Tag color="warning" style={{ marginLeft: 6, fontSize: '10px', fontWeight: 700 }}>⚡ FLASH SALE</Tag>}
-            <br />
-            <span style={{ fontSize: '11px', color: '#64748b' }}>Hãng {record.brand} | BH {record.warrantyPeriod || 12} tháng</span>
-          </div>
-        </Space>
-      )
-    },
-    { 
-      title: 'Danh mục', 
-      dataIndex: 'category', 
-      key: 'category',
-      render: (val) => val === 'Badminton' ? 'Cầu lông' : val
-    },
-    { title: 'Giá bán', dataIndex: 'price', key: 'price', render: (val) => formatVND(val) },
-    { title: 'Tồn kho', dataIndex: 'stockQuantity', key: 'stockQuantity' },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (val) => <Tag color={val === 'ACTIVE' ? 'success' : 'default'}>{val === 'ACTIVE' ? 'HOẠT ĐỘNG' : 'TẠM KHÓA'}</Tag> },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      render: (_, record) => (
-        <Space size="middle">
-          <Button type="text" icon={<EditOutlined />} onClick={() => handleOpenEditModal(record)} />
-          <Popconfirm title="Xác nhận xóa sản phẩm này?" onConfirm={() => handleDeleteProduct(record.id)} okText="Xóa" cancelText="Hủy">
-            <Button type="text" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      )
-    }
-  ];
-
-  const orderColumns = [
-    {
-      title: 'Mã đơn hàng / Người mua',
-      dataIndex: 'id',
-      key: 'id',
-      render: (id, record) => (
-        <div>
-          <span style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace' }}>{id}</span>
-          <br />
-          <span style={{ fontWeight: 600 }}>{record.customerName}</span>
-        </div>
-      )
+      render: (val) => <span style={{ fontWeight: 600 }}>{val}</span>,
     },
     {
-      title: 'Sản phẩm mua',
-      dataIndex: 'items',
-      key: 'items',
-      render: (items) => (
-        <Space direction="vertical" size={1}>
-          {items.map((item, idx) => (
-            <span key={idx} style={{ fontSize: '13px' }}>
-              • {item.productName} (x{item.quantity})
-            </span>
-          ))}
-        </Space>
-      )
-    },
-    { title: 'Tổng tiền', dataIndex: 'totalAmount', key: 'totalAmount', render: (val) => formatVND(val) },
-    { title: 'Trạng thái', dataIndex: 'orderStatus', key: 'orderStatus', render: (status) => getOrderStatusTag(status) },
-    {
-      title: 'Cập nhật trạng thái',
-      key: 'updateStatus',
-      render: (_, record) => (
-        <StatusSelect
-          defaultValue={record.orderStatus}
-          style={{ width: 140 }}
-          onChange={(val) => handleUpdateOrderStatus(record.id, val)}
-        >
-          <Option value="PROCESSING">ĐANG XỬ LÝ</Option>
-          <Option value="SHIPPED">ĐANG GIAO HÀNG</Option>
-          <Option value="DELIVERED">ĐÃ GIAO HÀNG</Option>
-          <Option value="CANCELLED">ĐÃ HỦY</Option>
-        </StatusSelect>
-      )
-    }
-  ];
-
-  const topProductColumns = [
-    { title: 'Tên vợt/sản phẩm', dataIndex: 'name', key: 'name', render: (val) => <span style={{ fontWeight: 600 }}>{val}</span> },
-    { title: 'Số lượng đã bán', dataIndex: 'quantity', key: 'quantity', align: 'center', render: (val) => <Tag color="blue">{val} sản phẩm</Tag> },
-    { title: 'Doanh thu thu về', dataIndex: 'revenue', key: 'revenue', render: (val) => <span style={{ color: '#DC2626', fontWeight: 700 }}>{formatVND(val)}</span> }
-  ];
-
-  const refundClaimColumns = [
-    {
-      title: 'Thời gian yêu cầu',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (dateStr) => new Date(dateStr).toLocaleString('vi-VN')
+      title: 'Số lượng đã bán',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      align: 'center',
+      render: (val) => <Tag color="blue">{val} sản phẩm</Tag>,
     },
     {
-      title: 'Mã đơn hàng',
-      dataIndex: 'orderId',
-      key: 'orderId',
-      render: (id) => <Text style={{ fontFamily: 'monospace', fontSize: '12px' }}>{id}</Text>
+      title: 'Doanh thu thu về',
+      dataIndex: 'revenue',
+      key: 'revenue',
+      render: (val) => (
+        <span style={{ color: '#DC2626', fontWeight: 700 }}>{formatVND(val)}</span>
+      ),
     },
-    {
-      title: 'Sản phẩm',
-      dataIndex: 'productName',
-      key: 'productName',
-      render: (name, record) => (
-        <div>
-          <span style={{ fontWeight: 600 }}>{name}</span>
-          {record.sku && <div style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace' }}>SKU: {record.sku}</div>}
-        </div>
-      )
-    },
-    {
-      title: 'Ảnh minh chứng (Cloudinary)',
-      dataIndex: 'productImage',
-      key: 'productImage',
-      render: (imgUrl) => (
-        <Image 
-          src={imgUrl} 
-          alt="Product intact" 
-          style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} 
-        />
-      )
-    },
-    {
-      title: 'Lý do hoàn tiền',
-      dataIndex: 'reason',
-      key: 'reason'
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => {
-        if (status === 'PENDING') return <Tag color="warning">CHỜ DUYỆT</Tag>;
-        if (status === 'APPROVED') return <Tag color="success">ĐÃ HOÀN TIỀN</Tag>;
-        return <Tag color="error">ĐÃ TỪ CHỐI</Tag>;
-      }
-    },
-    {
-      title: 'Ghi chú Admin',
-      dataIndex: 'adminComment',
-      key: 'adminComment',
-      render: (comment) => comment || '—'
-    },
-    {
-      title: 'Duyệt / Từ chối',
-      key: 'actions',
-      render: (_, record) => {
-        if (record.status === 'PENDING') {
-          return (
-            <Space>
-              <Button 
-                type="primary" 
-                icon={<CheckOutlined />} 
-                size="small" 
-                style={{ background: '#52c41a', borderColor: '#52c41a' }}
-                onClick={() => openActionModal('approve_refund', record.id)}
-              >
-                Duyệt
-              </Button>
-              <Button 
-                type="primary" 
-                danger 
-                icon={<CloseOutlined />} 
-                size="small" 
-                onClick={() => openActionModal('reject_refund', record.id)}
-              >
-                Từ chối
-              </Button>
-            </Space>
-          );
-        }
-        return <span style={{ color: '#94a3b8', fontSize: '12px' }}>Đã xử lý</span>;
-      }
-    }
-  ];
-
-  const warrantyClaimColumns = [
-    {
-      title: 'Thời gian yêu cầu',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (dateStr) => new Date(dateStr).toLocaleString('vi-VN')
-    },
-    {
-      title: 'Mã bảo hành',
-      dataIndex: 'warrantyCode',
-      key: 'warrantyCode',
-      render: (code) => <Tag color="blue" style={{ fontFamily: 'monospace' }}>{code}</Tag>
-    },
-    {
-      title: 'Sản phẩm',
-      dataIndex: 'productName',
-      key: 'productName'
-    },
-    {
-      title: 'Ảnh lỗi (Cloudinary)',
-      dataIndex: 'productImage',
-      key: 'productImage',
-      render: (imgUrl) => (
-        <Image 
-          src={imgUrl} 
-          alt="Product broken" 
-          style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} 
-        />
-      )
-    },
-    {
-      title: 'Mô tả lỗi',
-      dataIndex: 'issueDescription',
-      key: 'issueDescription'
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => {
-        if (status === 'PENDING') return <Tag color="warning">ĐANG XỬ LÝ</Tag>;
-        if (status === 'APPROVED') return <Tag color="success">ĐÃ BẢO HÀNH</Tag>;
-        return <Tag color="error">ĐÃ TỪ CHỐI</Tag>;
-      }
-    },
-    {
-      title: 'Ghi chú Admin',
-      dataIndex: 'adminComment',
-      key: 'adminComment',
-      render: (comment) => comment || '—'
-    },
-    {
-      title: 'Hành động',
-      key: 'actions',
-      render: (_, record) => {
-        if (record.status === 'PENDING') {
-          return (
-            <Space>
-              <Button 
-                type="primary" 
-                icon={<CheckOutlined />} 
-                size="small" 
-                style={{ background: '#52c41a', borderColor: '#52c41a' }}
-                onClick={() => openActionModal('approve_warranty', record.id)}
-              >
-                Duyệt bảo hành
-              </Button>
-              <Button 
-                type="primary" 
-                danger 
-                icon={<CloseOutlined />} 
-                size="small" 
-                onClick={() => openActionModal('reject_warranty', record.id)}
-              >
-                Từ chối
-              </Button>
-            </Space>
-          );
-        }
-        return <span style={{ color: '#94a3b8', fontSize: '12px' }}>Đã xử lý</span>;
-      }
-    }
   ];
 
   const tabsItems = [
@@ -479,11 +246,21 @@ export default function AdminDashboard({ onLogout }) {
       children: (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <RevenueChart stats={stats} />
-          <Card title={<span style={{ fontWeight: 700 }}>🏆 Top 5 sản phẩm bán chạy nhất</span>} styles={{ body: { padding: '0px' } }}>
-            <Table dataSource={stats?.topProducts || []} columns={topProductColumns} rowKey="productId" pagination={false} size="middle" scroll={{ x: 'max-content' }} />
+          <Card
+            title={<span style={{ fontWeight: 700 }}>🏆 Top 5 sản phẩm bán chạy nhất</span>}
+            styles={{ body: { padding: '0px' } }}
+          >
+            <Table
+              dataSource={stats?.topProducts || []}
+              columns={topProductColumns}
+              rowKey="productId"
+              pagination={false}
+              size="middle"
+              scroll={{ x: 'max-content' }}
+            />
           </Card>
         </Space>
-      )
+      ),
     },
     {
       key: '1',
@@ -491,88 +268,124 @@ export default function AdminDashboard({ onLogout }) {
       children: (
         <Card styles={{ body: { padding: '16px' } }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddModal} style={{ background: '#DC2626', borderColor: '#DC2626', fontWeight: 600 }}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleOpenAddModal}
+              style={{ background: '#DC2626', borderColor: '#DC2626', fontWeight: 600 }}
+            >
               Thêm sản phẩm mới
             </Button>
           </div>
-          <Table dataSource={products} columns={productColumns} rowKey="id" loading={loadingProducts} pagination={{ pageSize: 6 }} scroll={{ x: 'max-content' }} />
+          <ProductTable
+            products={products}
+            loading={loadingProducts}
+            onView={handleViewDetail}
+            onEdit={handleOpenEditModal}
+            onDelete={handleDeleteProduct}
+          />
         </Card>
-      )
+      ),
     },
     {
       key: '2',
       label: 'Quản lý đơn hàng',
       children: (
         <Card styles={{ body: { padding: '16px' } }}>
-          <Table dataSource={orders} columns={orderColumns} rowKey="id" loading={loadingOrders} pagination={{ pageSize: 6 }} scroll={{ x: 'max-content' }} />
+          <OrderTable
+            orders={orders}
+            loading={loadingOrders}
+            onUpdateStatus={handleUpdateOrderStatus}
+          />
         </Card>
-      )
+      ),
     },
     {
       key: '3',
-      label: (
-        <span>
-          <DollarCircleOutlined /> Duyệt Hoàn tiền
-        </span>
-      ),
+      label: <span><DollarCircleOutlined /> Duyệt Hoàn tiền</span>,
       children: (
-        <Card styles={{ body: { padding: '16px' } }} title="Yêu cầu hoàn trả tiền từ người dùng (trong 7 ngày)">
-          <Table 
-            dataSource={refundClaims} 
-            columns={refundClaimColumns} 
-            rowKey="id" 
-            loading={loadingRefunds} 
-            pagination={{ pageSize: 5 }} 
-            scroll={{ x: 'max-content' }}
+        <Card
+          styles={{ body: { padding: '16px' } }}
+          title="Yêu cầu hoàn trả tiền từ người dùng (trong 7 ngày)"
+        >
+          <RefundClaimsTable
+            refundClaims={refundClaims}
+            loading={loadingRefunds}
+            onAction={openActionModal}
           />
         </Card>
-      )
+      ),
     },
     {
       key: '4',
-      label: (
-        <span>
-          <SafetyCertificateOutlined /> Duyệt Bảo hành
-        </span>
-      ),
+      label: <span><SafetyCertificateOutlined /> Duyệt Bảo hành</span>,
       children: (
-        <Card styles={{ body: { padding: '16px' } }} title="Yêu cầu dịch vụ bảo hành sản phẩm">
-          <Table 
-            dataSource={warrantyClaims} 
-            columns={warrantyClaimColumns} 
-            rowKey="id" 
-            loading={loadingWarranties} 
-            pagination={{ pageSize: 5 }} 
-            scroll={{ x: 'max-content' }}
+        <Card
+          styles={{ body: { padding: '16px' } }}
+          title="Yêu cầu dịch vụ bảo hành sản phẩm"
+        >
+          <WarrantyClaimsTable
+            warrantyClaims={warrantyClaims}
+            loading={loadingWarranties}
+            onAction={openActionModal}
           />
         </Card>
-      )
-    }
+      ),
+    },
   ];
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: '1400px', margin: '0 auto', minHeight: '100vh', background: '#f8fafc' }}>
-      {/* Top Header Layer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, background: '#ffffff', padding: '16px 24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+    <div style={{
+      padding: '24px 32px', maxWidth: '1400px', margin: '0 auto',
+      minHeight: '100vh', background: '#f8fafc',
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: 28, background: '#ffffff', padding: '16px 24px',
+        borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+      }}>
         <div>
-          <span style={{ fontSize: '24px', fontWeight: 900, color: '#DC2626' }}>Bảng quản trị (Admin Panel)</span>
+          <span style={{ fontSize: '24px', fontWeight: 900, color: '#DC2626' }}>
+            Bảng quản trị (Admin Panel)
+          </span>
           <br />
-          <span style={{ color: '#64748b', fontSize: '14px' }}>Hệ thống theo dõi doanh thu, thông số sản phẩm, bảo hành, hoàn tiền và xử lý đơn hàng</span>
+          <span style={{ color: '#64748b', fontSize: '14px' }}>
+            Hệ thống theo dõi doanh thu, thông số sản phẩm, bảo hành, hoàn tiền và xử lý đơn hàng
+          </span>
         </div>
-        <Button danger type="primary" icon={<LogoutOutlined />} onClick={handleAdminLogout} style={{ fontWeight: 600, borderRadius: '8px' }}>
+        <Button
+          danger
+          type="primary"
+          icon={<LogoutOutlined />}
+          onClick={onLogout}
+          style={{ fontWeight: 600, borderRadius: '8px' }}
+        >
           Đăng xuất Admin
         </Button>
       </div>
 
-      {/* Stats Cards Section */}
       <StatsCards stats={stats} loadingStats={loadingStats} />
 
-      <Tabs defaultActiveKey="stats" items={tabsItems} type="card" onChange={(key) => {
-        if (key === '3') fetchRefundClaims();
-        if (key === '4') fetchWarrantyClaims();
-      }} />
+      <Tabs
+        defaultActiveKey="stats"
+        items={tabsItems}
+        type="card"
+        onChange={(key) => {
+          if (key === '3') fetchRefundClaims();
+          if (key === '4') fetchWarrantyClaims();
+        }}
+      />
 
-      {/* PRODUCT ADD/EDIT MODAL */}
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        open={detailModalOpen}
+        product={selectedProduct}
+        onClose={() => setDetailModalOpen(false)}
+        onEdit={handleOpenEditModal}
+      />
+
+      {/* Product Add/Edit Modal */}
       <Modal
         title={editingProductId ? 'Sửa thông tin sản phẩm' : 'Thêm sản phẩm mới'}
         open={modalOpen}
@@ -605,7 +418,12 @@ export default function AdminDashboard({ onLogout }) {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="price" label="Giá bán (VND)" rules={[{ required: true, message: 'Nhập giá bán' }]}>
-                <InputNumber min={1} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')} parser={value => value.replace(/\./g, '')} style={{ width: '100%' }} />
+                <InputNumber
+                  min={1}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                  parser={(value) => value.replace(/\./g, '')}
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -635,7 +453,6 @@ export default function AdminDashboard({ onLogout }) {
           <Form.Item name="description" label="Mô tả chi tiết sản phẩm">
             <Input.TextArea rows={3} placeholder="Nhập thông số chi tiết vợt cầu lông hoặc mô tả khác..." />
           </Form.Item>
-          
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item name="weight" label="Trọng lượng">
@@ -671,7 +488,6 @@ export default function AdminDashboard({ onLogout }) {
               </Form.Item>
             </Col>
           </Row>
-
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="length" label="Chiều dài (mm)">
@@ -684,7 +500,6 @@ export default function AdminDashboard({ onLogout }) {
               </Form.Item>
             </Col>
           </Row>
-
           <Row gutter={16}>
             <Col span={24}>
               <Form.Item name="isFlashSale" label="Tham gia Flash Sale">
@@ -697,14 +512,20 @@ export default function AdminDashboard({ onLogout }) {
           </Row>
           <Row gutter={16}>
             <Col span={24}>
-              <Form.Item 
-                noStyle 
-                shouldUpdate={(prevValues, currentValues) => prevValues.isFlashSale !== currentValues.isFlashSale}
-              >
-                {({ getFieldValue }) => 
+              <Form.Item noStyle shouldUpdate={(prev, cur) => prev.isFlashSale !== cur.isFlashSale}>
+                {({ getFieldValue }) =>
                   getFieldValue('isFlashSale') === true ? (
-                    <Form.Item name="flashSalePrice" label="Giá bán Flash Sale (VND)" rules={[{ required: true, message: 'Nhập giá bán Flash Sale' }]}>
-                      <InputNumber min={1} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')} parser={value => value.replace(/\./g, '')} style={{ width: '100%' }} />
+                    <Form.Item
+                      name="flashSalePrice"
+                      label="Giá bán Flash Sale (VND)"
+                      rules={[{ required: true, message: 'Nhập giá bán Flash Sale' }]}
+                    >
+                      <InputNumber
+                        min={1}
+                        formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                        parser={(value) => value.replace(/\./g, '')}
+                        style={{ width: '100%' }}
+                      />
                     </Form.Item>
                   ) : null
                 }
@@ -714,11 +535,13 @@ export default function AdminDashboard({ onLogout }) {
         </Form>
       </Modal>
 
-      {/* --- ACTION PROCESSING MODAL (FOR REFUNDS AND WARRANTIES) --- */}
+      {/* Claim Action Modal */}
       <Modal
         title={
           <strong>
-            {actionType.startsWith('approve') ? <Tag color="success">DUYỆT YÊU CẦU</Tag> : <Tag color="error">TỪ CHỐI YÊU CẦU</Tag>}
+            {actionType.startsWith('approve')
+              ? <Tag color="success">DUYỆT YÊU CẦU</Tag>
+              : <Tag color="error">TỪ CHỐI YÊU CẦU</Tag>}
           </strong>
         }
         open={actionModalOpen}
@@ -730,10 +553,13 @@ export default function AdminDashboard({ onLogout }) {
       >
         <Divider style={{ margin: '12px 0' }} />
         <Form form={actionForm} layout="vertical" onFinish={handleActionSubmit}>
-          <Form.Item 
-            name="adminComment" 
-            label="Ghi chú phản hồi gửi tới khách hàng" 
-            rules={[{ required: actionType.startsWith('reject'), message: 'Vui lòng nhập lý do nếu từ chối yêu cầu!' }]}
+          <Form.Item
+            name="adminComment"
+            label="Ghi chú phản hồi gửi tới khách hàng"
+            rules={[{
+              required: actionType.startsWith('reject'),
+              message: 'Vui lòng nhập lý do nếu từ chối yêu cầu!',
+            }]}
           >
             <TextArea rows={4} placeholder="Nhập nhận xét, hướng dẫn gửi trả sản phẩm hoặc lý do từ chối..." />
           </Form.Item>

@@ -19,8 +19,11 @@ import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -56,6 +59,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
                 .requestMatchers("/api/chat").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 
                 // Admin CRUD endpoints
                 .requestMatchers(HttpMethod.POST, "/api/products/**").hasAuthority("ADMIN")

@@ -50,6 +50,10 @@ export default function Login({ onLoginSuccess }) {
         return;
       }
 
+      // Store token for WebSocket STOMP authentication
+      localStorage.setItem('token', token);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+
       message.success(`Chào mừng quay lại, ${fullName}!`);
       onLoginSuccess({ username, role, fullName });
       navigate('/');

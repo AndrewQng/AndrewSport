@@ -18,6 +18,7 @@ import ProductDetailModal from '../components/admin/ProductDetailModal';
 import OrderTable from '../components/admin/OrderTable';
 import RefundClaimsTable from '../components/admin/RefundClaimsTable';
 import WarrantyClaimsTable from '../components/admin/WarrantyClaimsTable';
+import AdminSupportTab from '../components/admin/AdminSupportTab';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -331,6 +332,11 @@ export default function AdminDashboard({ onLogout }) {
           />
         </Card>
       ),
+    },
+    {
+      key: 'support',
+      label: <span>💬 Hỗ trợ khách hàng</span>,
+      children: <AdminSupportTab />,
     },
   ];
 

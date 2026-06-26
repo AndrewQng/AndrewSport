@@ -52,4 +52,6 @@ _Avoid_: Return, payback
 A customer request for product warranty service. It must reference a valid `orderId` (acting as the invoice key), describe the product issue, include a photo of the product, and specify the system-provided `warrantyCode`.
 _Avoid_: Repair, guarantee
 
-
+**SupportChat (Chat hỗ trợ trực tiếp)**:
+A live text messaging channel between an authenticated User and Admin. There is exactly one thread per User, keyed by `userId`. Messages are persisted in the `chat_messages` MongoDB collection and delivered in realtime via WebSocket (STOMP over SockJS). Each message records `senderRole` (USER or ADMIN) and an `isRead` flag used to display unread badge counts.
+_Avoid_: Ticket, live chat, support ticket

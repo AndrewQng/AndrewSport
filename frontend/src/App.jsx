@@ -3,6 +3,7 @@ import { Layout, message, ConfigProvider, Modal } from 'antd';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ChatbotDrawer from './components/ChatbotDrawer';
+import ChatSupportBubble from './components/ChatSupportBubble';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -49,7 +50,14 @@ export default function App() {
   const checkAuth = async () => {
     try {
       const response = await api.get('/auth/me');
-      setUser(response.data);
+      const userData = response.data;
+
+      // Admin account should only be active on /admin path
+      if (userData.role === 'ADMIN' && !location.pathname.startsWith('/admin')) {
+        setUser(null);
+      } else {
+        setUser(userData);
+      }
     } catch (e) {
       setUser(null);
       
@@ -66,8 +74,8 @@ export default function App() {
           okText: 'Đăng nhập ngay',
           cancelText: 'Trải nghiệm tiếp',
           okCancel: true,
-          maskClosable: true, // Cho phép click ra ngoài để đóng
-          closable: true,     // Hiện nút X ở góc
+          maskClosable: true,
+          closable: true,
           styles: {
             body: { padding: '12px' }
           },
@@ -150,6 +158,8 @@ export default function App() {
       // ignore
     }
     setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     navigate('/');
     message.success('Đăng xuất thành công.');
   };
@@ -161,6 +171,8 @@ export default function App() {
       // ignore
     }
     setUser(null);
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_refreshToken');
     navigate('/admin/login');
     message.success('Đăng xuất quản trị thành công.');
   };
@@ -298,6 +310,7 @@ export default function App() {
           🏸 AndrewSport © 2026.
         </Footer>
         <ChatbotDrawer />
+        <ChatSupportBubble user={user} />
       </Layout>
     </ConfigProvider>
   );

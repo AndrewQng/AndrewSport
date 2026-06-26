@@ -77,6 +77,12 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- WebSocket / STOMP -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
         <!-- Cloudinary SDK -->
         <dependency>
             <groupId>com.cloudinary</groupId>

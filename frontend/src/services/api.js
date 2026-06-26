@@ -5,9 +5,16 @@ const api = axios.create({
   withCredentials: true
 });
 
-// Request Interceptor
+// Request Interceptor — attach correct Bearer token per role
 api.interceptors.request.use(
   (config) => {
+    const isAdminPath = window.location.pathname.startsWith('/admin');
+    const token = isAdminPath
+      ? localStorage.getItem('admin_token')
+      : localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {

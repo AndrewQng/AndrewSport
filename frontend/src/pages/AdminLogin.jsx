@@ -24,6 +24,10 @@ export default function AdminLogin({ onLoginSuccess }) {
         return;
       }
 
+      // Store token for WebSocket STOMP authentication
+      localStorage.setItem('admin_token', token);
+      if (refreshToken) localStorage.setItem('admin_refreshToken', refreshToken);
+
       message.success(`Chào mừng Admin quay lại, ${fullName}!`);
       onLoginSuccess({ username, role, fullName });
       navigate('/admin');

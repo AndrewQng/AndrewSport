@@ -37,6 +37,7 @@ public class AdminStatsController {
         // 1. Total Revenue (VND) - Exclude Cancelled orders
         double totalRevenue = orders.stream()
                 .filter(o -> !"CANCELLED".equalsIgnoreCase(o.getOrderStatus()))
+                .filter(o -> o.getTotalAmount() != null)
                 .mapToDouble(Order::getTotalAmount)
                 .sum();
 
@@ -55,7 +56,7 @@ public class AdminStatsController {
         // 3. Category Sales
         // Load products into map for quick lookup of categories
         Map<String, String> productCategoryMap = products.stream()
-                .filter(p -> p.getId() != null)
+                .filter(p -> p.getId() != null && p.getCategory() != null)
                 .collect(Collectors.toMap(Product::getId, Product::getCategory, (v1, v2) -> v1));
 
         Map<String, Double> categorySales = new HashMap<>();
@@ -82,7 +83,7 @@ public class AdminStatsController {
         
         for (Order o : orders) {
             if ("CANCELLED".equalsIgnoreCase(o.getOrderStatus())) continue;
-            if (o.getOrderDate() != null) {
+            if (o.getOrderDate() != null && o.getTotalAmount() != null) {
                 String dateStr = o.getOrderDate().format(formatter);
                 dailyRevenue.put(dateStr, dailyRevenue.getOrDefault(dateStr, 0.0) + o.getTotalAmount());
             }
